@@ -1,0 +1,8 @@
+{
+  "name": "Shafi's Store",
+  "description": "A premium white theme full-stack application featuring user profiles, social media management, product galleries, and an admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
