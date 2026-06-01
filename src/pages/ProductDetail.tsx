@@ -62,19 +62,6 @@ export function ProductDetail() {
       }
       setPurchaseSuccess(true);
 
-      // Notify Admin via WhatsApp
-      if (settings?.adminWhatsappNumber) {
-        const priceText = productToBuy.price !== undefined && productToBuy.price !== null ? `\nPrice: ${settings.currencySymbol || "৳"}${productToBuy.price.toFixed(2)}` : '';
-        const msg = `New Order\nUser: ${user.email}\nProduct: ${productToBuy.title}${priceText}${userInput ? `\nUser Input: ${userInput}` : ''}`;
-        let waAdmin = settings.adminWhatsappNumber.replace(/[^\d+]/g, '');
-        if (waAdmin.startsWith('01')) waAdmin = '88' + waAdmin;
-        
-        if (!settings.telegramChatId) {
-          const waLink = `https://wa.me/${waAdmin}?text=${encodeURIComponent(msg)}`;
-          window.open(waLink, '_blank');
-        }
-      }
-
     } catch (e: any) {
       setPurchaseError(e.message || "Purchase failed.");
     }

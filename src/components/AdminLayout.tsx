@@ -2,7 +2,7 @@ import React from "react";
 import { Link, Outlet } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
-import { LogOut, Home, Settings, Package, Users, Wallet, ShoppingCart } from "lucide-react";
+import { LogOut, Home, Settings, Package, Users, Wallet, ShoppingCart, History } from "lucide-react";
 import { Button } from "./ui";
 
 export function AdminLayout() {
@@ -42,6 +42,10 @@ export function AdminLayout() {
           <Link to="/admin/orders" className="inline-flex md:flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 text-sm md:text-base text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold transition-colors">
             <ShoppingCart className="w-4 h-4 md:w-5 h-5 flex-shrink-0" />
             Orders
+          </Link>
+          <Link to="/admin/transactions" className="inline-flex md:flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 text-sm md:text-base text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold transition-colors">
+            <History className="w-4 h-4 md:w-5 h-5 flex-shrink-0" />
+            Transactions
           </Link>
           <Link to="/admin/settings" className="inline-flex md:flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 text-sm md:text-base text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold transition-colors">
             <Settings className="w-4 h-4 md:w-5 h-5 flex-shrink-0" />

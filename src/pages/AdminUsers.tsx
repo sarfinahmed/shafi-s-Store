@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import { db, User } from "../lib/db";
 import { Button, Input } from "../components/ui";
-import { Trash2, CheckCircle, ShieldAlert, Shield, Ban, Unlock, Search as SearchIcon } from "lucide-react";
+import { Trash2, CheckCircle, ShieldAlert, Shield, Ban, Unlock, Search as SearchIcon, Plus, Minus } from "lucide-react";
 
 export function AdminUsers() {
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [balanceAmount, setBalanceAmount] = useState("");
+  const [balanceReason, setBalanceReason] = useState("");
+  const [adjustUserId, setAdjustUserId] = useState<string | null>(null);
   const [notification, setNotification] = useState("");
 
   const loadData = async () => {
@@ -45,6 +48,24 @@ export function AdminUsers() {
   const handleToggleAdmin = async (id: string, currentStatus: boolean) => {
     await db.updateUser(id, { isAdmin: !currentStatus });
     notify(currentStatus ? "Admin rights revoked" : "User is now an admin");
+    loadData();
+  };
+
+  const handleAdjustBalance = async (u: User) => {
+    const amt = parseFloat(balanceAmount);
+    if (!amt || !balanceReason) {
+      alert("Please enter amount and reason");
+      return;
+    }
+    
+    const newBalance = (u.balance || 0) + amt;
+    await db.updateUser(u.id, { balance: newBalance });
+    await db.logTransaction(u.id, Math.abs(amt), amt > 0 ? "deposit" : "purchase", `Admin adjustment: ${balanceReason}`);
+    
+    setAdjustUserId(null);
+    setBalanceAmount("");
+    setBalanceReason("");
+    notify(`Balance adjusted for ${u.email}`);
     loadData();
   };
 
@@ -100,7 +121,8 @@ export function AdminUsers() {
                     <td colSpan={4} className="px-6 py-12 text-center text-zinc-500 font-medium">No users found.</td>
                   </tr>
                 ) : filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-zinc-900/50 transition-colors">
+                  <React.Fragment key={u.id}>
+                  <tr className="hover:bg-zinc-900/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-[#111] overflow-hidden flex-shrink-0 flex items-center justify-center font-black text-white border border-zinc-800">
@@ -133,6 +155,15 @@ export function AdminUsers() {
                            <Button 
                              variant="ghost" 
                              size="sm" 
+                             onClick={() => setAdjustUserId(adjustUserId === u.id ? null : u.id)} 
+                             className="text-zinc-500 hover:text-white hover:bg-zinc-800 w-10 h-10 p-0 rounded-xl"
+                             title="Adjust Balance"
+                           >
+                             {adjustUserId === u.id ? <Minus className="w-5 h-5 mx-auto" /> : <Plus className="w-5 h-5 mx-auto" />}
+                           </Button>
+                           <Button 
+                             variant="ghost" 
+                             size="sm" 
                              onClick={() => handleToggleBan(u.id, !!u.isBanned)} 
                              className={`w-10 h-10 p-0 rounded-xl ${u.isBanned ? 'text-green-500 hover:text-green-400 hover:bg-green-950/30' : 'text-amber-500 hover:text-amber-400 hover:bg-amber-950/30'}`}
                              title={u.isBanned ? "Unban User" : "Ban User"}
@@ -160,7 +191,39 @@ export function AdminUsers() {
                         </div>
                     </td>
                   </tr>
-                ))}
+                  {adjustUserId === u.id && (
+                  <tr key={`${u.id}-adjust`} className="bg-[#111] animate-in fade-in slide-in-from-top-1">
+                    <td colSpan={4} className="px-6 py-4">
+                      <div className="flex flex-col md:flex-row items-end gap-3 max-w-2xl ml-auto">
+                        <div className="flex-1 w-full space-y-1">
+                          <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest pl-1">Amount (+ to add, - to deduct)</label>
+                          <Input 
+                            type="number" 
+                            placeholder="e.g. 500 or -200" 
+                            className="bg-black border-zinc-900"
+                            value={balanceAmount}
+                            onChange={e => setBalanceAmount(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex-1 w-full space-y-1">
+                          <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest pl-1">Reason</label>
+                          <Input 
+                            placeholder="e.g. Refund or Bonus" 
+                            className="bg-black border-zinc-900"
+                            value={balanceReason}
+                            onChange={e => setBalanceReason(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex gap-2 w-full md:w-auto">
+                          <Button onClick={() => handleAdjustBalance(u)} size="sm">Update</Button>
+                          <Button variant="ghost" size="sm" onClick={() => setAdjustUserId(null)}>Cancel</Button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
+              ))}
               </tbody>
             </table>
           </div>

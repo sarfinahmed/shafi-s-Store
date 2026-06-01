@@ -13,6 +13,15 @@ export interface User {
   purchasedProducts?: string[];
 }
 
+export interface Transaction {
+  id: string;
+  userId: string;
+  amount: number;
+  type: "deposit" | "purchase" | "refund";
+  description: string;
+  createdAt: number;
+}
+
 export interface SocialLink {
   id: string;
   userId: string;
@@ -140,12 +149,35 @@ class FirebaseDatabase {
     return snap.data() as User;
   }
 
-  async addFunds(userId: string, amount: number): Promise<void> {
+  async addFunds(userId: string, amount: number, description: string = "Funds added to balance"): Promise<void> {
     const userRef = doc(dbInit, "users", userId);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) throw new Error("User not found");
     const balance = (userSnap.data().balance || 0) + amount;
     await updateDoc(userRef, { balance });
+    await this.logTransaction(userId, amount, "deposit", description);
+  }
+
+  async logTransaction(userId: string, amount: number, type:Transaction["type"], description: string): Promise<void> {
+    const ref = doc(collection(dbInit, "transactions"));
+    const trx: Transaction = {
+      id: ref.id,
+      userId,
+      amount,
+      type,
+      description,
+      createdAt: Date.now()
+    };
+    await setDoc(ref, trx);
+  }
+
+  async getTransactions(userId?: string): Promise<Transaction[]> {
+    let q = query(collection(dbInit, "transactions"), orderBy("createdAt", "desc"));
+    if (userId) {
+      q = query(collection(dbInit, "transactions"), where("userId", "==", userId), orderBy("createdAt", "desc"));
+    }
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as Transaction);
   }
 
   async purchaseProduct(userId: string, product: Product, userInput?: string): Promise<Order> {
@@ -160,6 +192,8 @@ class FirebaseDatabase {
       balance: balance - product.price,
       purchasedProducts: [...(u.purchasedProducts || []), product.id]
     });
+
+    await this.logTransaction(userId, product.price, "purchase", `Purchased ${product.title}`);
 
     const orderRef = doc(collection(dbInit, "orders"));
     const order: Order = {
@@ -271,7 +305,7 @@ class FirebaseDatabase {
     if (req.status !== "pending") throw new Error("Request already processed");
 
     if (status === "approved") {
-      await this.addFunds(req.userId, req.amount);
+      await this.addFunds(req.userId, req.amount, `Deposit Approved (TrxID: ${req.trxId})`);
     }
     
     await updateDoc(ref, { status });

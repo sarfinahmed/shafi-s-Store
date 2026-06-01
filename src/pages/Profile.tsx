@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
-import { db, SocialLink } from "../lib/db";
+import { db, SocialLink, Transaction } from "../lib/db";
 import { Button, Input, Textarea } from "../components/ui";
-import { ExternalLink, Plus, Trash2, Wallet, Package, Copy } from "lucide-react";
+import { ExternalLink, Plus, Trash2, Wallet, Package, Copy, History, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { motion } from "motion/react";
 
 export function Profile() {
@@ -12,6 +12,7 @@ export function Profile() {
   const [links, setLinks] = useState<SocialLink[]>([]);
   const [deposits, setDeposits] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [editing, setEditing] = useState(false);
   
   // Deposit state
@@ -41,6 +42,7 @@ export function Profile() {
     if (user && !user.isAdmin) {
       db.getUserDepositRequests(user.id).then(setDeposits);
       db.getUserOrders(user.id).then(setOrders);
+      db.getTransactions(user.id).then(setTransactions);
     }
   }, [user]);
 
@@ -226,18 +228,49 @@ export function Profile() {
 
           {deposits.length > 0 && (
             <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl md:rounded-3xl overflow-hidden p-5 md:p-6">
-              <h3 className="text-base md:text-lg font-black text-white mb-3 md:mb-4">Deposit History</h3>
+              <h3 className="text-base md:text-lg font-black text-white mb-3 md:mb-4 flex items-center gap-2">
+                <History className="w-4 h-4 text-zinc-500" />
+                Deposit History
+              </h3>
               <div className="space-y-3">
                 {deposits.map(d => (
                   <div key={d.id} className="flex items-center justify-between p-4 bg-[#111] rounded-2xl border border-zinc-800">
                     <div>
                       <div className="text-white font-bold">{settings?.currencySymbol || "৳"}{d.amount.toFixed(2)}</div>
-                      <div className="text-xs text-zinc-500 font-medium">TrxID: {d.trxId}</div>
+                      <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">{new Date(d.createdAt).toLocaleString()}</div>
+                      <div className="text-[10px] text-zinc-500 font-medium mt-1">TrxID: {d.trxId}</div>
                     </div>
                     <div>
-                      <span className={`text-xs px-2 py-1 rounded-full font-bold uppercase tracking-widest ${d.status === 'approved' ? 'bg-green-950 text-green-500' : d.status === 'rejected' ? 'bg-red-950 text-red-500' : 'bg-amber-950 text-amber-500'}`}>
+                      <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-widest ${d.status === 'approved' ? 'bg-green-950 text-green-500' : d.status === 'rejected' ? 'bg-red-950 text-red-500' : 'bg-amber-950 text-amber-500'}`}>
                         {d.status}
                       </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {transactions.length > 0 && (
+            <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl md:rounded-3xl overflow-hidden p-5 md:p-6">
+              <h3 className="text-base md:text-lg font-black text-white mb-3 md:mb-4 flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-zinc-500" />
+                Transaction History
+              </h3>
+              <div className="space-y-3">
+                {transactions.map(t => (
+                  <div key={t.id} className="flex items-start justify-between p-4 bg-[#111] rounded-2xl border border-zinc-800">
+                    <div className="flex items-start gap-4">
+                      <div className={`mt-1 p-2 rounded-lg ${t.type === 'deposit' || t.type === 'refund' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                        {t.type === 'deposit' || t.type === 'refund' ? <ArrowUpRight className={`w-4 h-4 ${t.type === 'deposit' || t.type === 'refund' ? 'text-green-500' : 'text-red-500'}`} /> : <ArrowDownLeft className="w-4 h-4 text-red-500" />}
+                      </div>
+                      <div>
+                        <div className="text-white font-bold text-sm">{t.description}</div>
+                        <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider mt-1">{new Date(t.createdAt).toLocaleString()}</div>
+                      </div>
+                    </div>
+                    <div className={`font-black text-sm ${t.type === 'deposit' || t.type === 'refund' ? 'text-green-500' : 'text-white'}`}>
+                      {t.type === 'deposit' || t.type === 'refund' ? '+' : '-'}{settings?.currencySymbol || "৳"}{t.amount.toFixed(2)}
                     </div>
                   </div>
                 ))}

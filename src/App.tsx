@@ -18,6 +18,7 @@ import { AdminSettings } from "./pages/AdminSettings";
 import { AdminUsers } from "./pages/AdminUsers";
 import { AdminDeposits } from "./pages/AdminDeposits";
 import { AdminOrders } from "./pages/AdminOrders";
+import { AdminTransactions } from "./pages/AdminTransactions";
 import { Contact } from "./pages/Contact";
 import { GlobalMaintenance } from "./components/GlobalMaintenance";
 
@@ -73,6 +74,7 @@ export default function App() {
               <Route path="deposits" element={<AdminDeposits />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="orders" element={<AdminOrders />} />
+              <Route path="transactions" element={<AdminTransactions />} />
             </Route>
 
           </Routes>

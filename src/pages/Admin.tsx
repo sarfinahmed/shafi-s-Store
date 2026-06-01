@@ -3,12 +3,20 @@ import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
 import { db, Product, User, SocialLink } from "../lib/db";
 import { Button, Input, Textarea } from "../components/ui";
-import { Plus, Trash2, CheckCircle, Edit, Eye, EyeOff, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Edit, Eye, EyeOff, ArrowUp, ArrowDown, Copy, Users, ShoppingBag, CreditCard, DollarSign } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function Admin() {
   const { user } = useAuth();
   const { settings } = useConfig();
   const [products, setProducts] = useState<Product[]>([]);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalProducts: 0,
+    totalOrders: 0,
+    revenue: 0
+  });
+  const [chartData, setChartData] = useState<any[]>([]);
   
   // Add/Edit Product State
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -29,8 +37,39 @@ export function Admin() {
   const [notification, setNotification] = useState("");
 
   const loadData = async () => {
-    const p = await db.getProducts();
+    const [p, users, orders] = await Promise.all([
+      db.getProducts(),
+      db.getAllUsers(),
+      db.getOrders()
+    ]);
     setProducts(p);
+    
+    const rev = orders.reduce((acc, o) => acc + (o.price || 0), 0);
+    setStats({
+      totalUsers: users.length,
+      totalProducts: p.length,
+      totalOrders: orders.length,
+      revenue: rev
+    });
+
+    // Process chart data (last 7 days)
+    const days = 7;
+    const now = new Date();
+    const result = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(now.getDate() - i);
+      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      const dayOrders = orders.filter(o => {
+        const orderDate = new Date(o.createdAt);
+        return orderDate.toDateString() === d.toDateString();
+      });
+      
+      const dayRevenue = dayOrders.reduce((acc, o) => acc + (o.price || 0), 0);
+      result.push({ name: dateStr, revenue: dayRevenue });
+    }
+    setChartData(result);
   };
 
   useEffect(() => {
@@ -167,8 +206,114 @@ export function Admin() {
     loadData();
   };
 
+  const handleDuplicateProduct = async (product: Product) => {
+    const { id, createdAt, ...rest } = product;
+    await db.addProduct({
+      ...rest,
+      title: `${product.title} (Copy)`,
+      isActive: false,
+      createdAt: Date.now()
+    });
+    notify("Product duplicated as hidden");
+    loadData();
+  };
+
   return (
     <div className="space-y-6 md:space-y-8 p-4 md:p-12 max-w-5xl">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <ShoppingBag className="w-4 h-4 text-blue-500" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Products</span>
+          </div>
+          <div className="text-2xl font-black text-white">{stats.totalProducts}</div>
+        </div>
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-purple-500/10 rounded-lg">
+              <Users className="w-4 h-4 text-purple-500" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Users</span>
+          </div>
+          <div className="text-2xl font-black text-white">{stats.totalUsers}</div>
+        </div>
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-amber-500/10 rounded-lg">
+              <CreditCard className="w-4 h-4 text-amber-500" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Orders</span>
+          </div>
+          <div className="text-2xl font-black text-white">{stats.totalOrders}</div>
+        </div>
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-green-500/10 rounded-lg">
+              <DollarSign className="w-4 h-4 text-green-500" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Revenue</span>
+          </div>
+          <div className="text-2xl font-black text-white">{settings?.currencySymbol || "৳"}{stats.revenue.toLocaleString()}</div>
+        </div>
+      </div>
+
+      <div className="bg-[#0a0a0a] p-6 rounded-3xl border border-zinc-900 shadow-sm">
+        <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-6 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+          Revenue Overview (Last 7 Days)
+        </h3>
+        <div className="h-[200px] md:h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" vertical={false} />
+              <XAxis 
+                dataKey="name" 
+                stroke="#52525b" 
+                fontSize={10} 
+                tickLine={false} 
+                axisLine={false} 
+                tick={{ fontWeight: 700 }}
+              />
+              <YAxis 
+                stroke="#52525b" 
+                fontSize={10} 
+                tickLine={false} 
+                axisLine={false} 
+                tickFormatter={(value) => `${settings?.currencySymbol || "৳"}${value}`}
+                tick={{ fontWeight: 700 }}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#0a0a0a', 
+                  border: '1px solid #1f1f1f', 
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+                itemStyle={{ color: '#22c55e' }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="revenue" 
+                stroke="#22c55e" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorRev)" 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-white">Products</h1>
@@ -353,6 +498,9 @@ export function Admin() {
                           title={product.isActive !== false ? "Hide Product" : "Show Product"}
                         >
                           {product.isActive !== false ? <EyeOff className="w-5 h-5 mx-auto" /> : <Eye className="w-5 h-5 mx-auto" />}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDuplicateProduct(product)} className="text-zinc-500 hover:text-white hover:bg-zinc-800 w-10 h-10 p-0 rounded-xl" title="Duplicate Product">
+                          <Copy className="w-5 h-5 mx-auto" />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => handleEditClick(product)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-950/30 w-10 h-10 p-0 rounded-xl" title="Edit Product">
                           <Edit className="w-5 h-5 mx-auto" />
