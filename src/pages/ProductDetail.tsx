@@ -30,6 +30,9 @@ export function ProductDetail() {
 
   if (loading) return <div className="text-center py-20 text-zinc-500 font-medium">Loading premium product...</div>;
   if (!product) return <div className="text-center py-20 text-red-500 font-bold">Product not found.</div>;
+  if (product.isActive === false && !user?.isAdmin) {
+    return <div className="text-center py-20 text-zinc-500 font-bold">This product is currently unavailable.</div>;
+  }
 
   const currentPrice = selectedOption ? selectedOption.price : product.price;
   const currentTitle = selectedOption ? `${product.title} - ${selectedOption.name}` : product.title;
@@ -61,7 +64,8 @@ export function ProductDetail() {
 
       // Notify Admin via WhatsApp
       if (settings?.adminWhatsappNumber) {
-        const msg = `New Order\nUser: ${user.email}\nProduct: ${productToBuy.title}\nPrice: ${settings.currencySymbol || "৳"}${productToBuy.price.toFixed(2)}${userInput ? `\nUser Input: ${userInput}` : ''}`;
+        const priceText = productToBuy.price !== undefined && productToBuy.price !== null ? `\nPrice: ${settings.currencySymbol || "৳"}${productToBuy.price.toFixed(2)}` : '';
+        const msg = `New Order\nUser: ${user.email}\nProduct: ${productToBuy.title}${priceText}${userInput ? `\nUser Input: ${userInput}` : ''}`;
         let waAdmin = settings.adminWhatsappNumber.replace(/[^\d+]/g, '');
         if (waAdmin.startsWith('01')) waAdmin = '88' + waAdmin;
         
@@ -97,9 +101,9 @@ export function ProductDetail() {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent flex flex-col justify-end p-6">
           <h1 className="text-2xl md:text-3xl font-black tracking-tighter text-white mb-1 shadow-sm">{product.title}</h1>
-          <p className="text-[10px] md:text-xs font-bold text-green-400 uppercase tracking-widest mb-2 flex items-center">
-             <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-             Instant Delivery Available
+          <p className={`text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2 flex items-center ${product.estimatedTime ? 'text-amber-400' : 'text-green-400'}`}>
+             <span className={`w-2 h-2 rounded-full ${product.estimatedTime ? 'bg-amber-500' : 'bg-green-500'} mr-2 animate-pulse`}></span>
+             {product.estimatedTime ? `Estimated Delivery: ${product.estimatedTime}` : 'Instant Delivery Available'}
           </p>
           {product.description && (
              <p className="text-zinc-300 text-sm max-w-2xl hidden md:block">{product.description}</p>
@@ -137,14 +141,14 @@ export function ProductDetail() {
               </div>
             </div>
           </div>
-        ) : (
+        ) : product.price !== undefined && product.price !== null ? (
            <div className="bg-[#0a0a0a] rounded-2xl border border-zinc-900 p-5 flex justify-between items-center">
               <h2 className="text-sm font-bold text-white uppercase tracking-widest">Price</h2>
               <div className="text-xl font-black text-orange-400">
                 {product.price.toFixed(0)}{settings?.currencySymbol || "৳"}
               </div>
            </div>
-        )}
+        ) : null}
 
         {/* 2. Account Info (User Input) */}
         {product.requiredUserInputLabel && (
@@ -176,13 +180,21 @@ export function ProductDetail() {
         )}
 
         {/* 3. Action / Buy */}
-        <div className="bg-[#0a0a0a] rounded-2xl border border-zinc-900 overflow-hidden">
-          <div className="p-5">
-            {purchaseSuccess && (
+        {((currentPrice !== undefined && currentPrice !== null) || (product.options && product.options.length > 0) || product.whatsappNumber) && (
+          <div className="bg-[#0a0a0a] rounded-2xl border border-zinc-900 overflow-hidden">
+            <div className="p-5">
+              {purchaseSuccess && (
               <div className="flex flex-col items-center justify-center bg-green-950/30 border border-green-900/50 text-green-400 py-4 px-4 rounded-xl font-bold text-sm mb-6">
-                <div className="flex items-center text-center">
-                  <CheckCircle className="w-5 h-5 mr-3 flex-shrink-0" />
-                  {product.isManualFulfillment ? "Order Pending Admin Verification (Check Profile > My Orders)" : "Purchased Successfully"}
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex items-center">
+                    <CheckCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+                    {product.isManualFulfillment ? "Order Pending Admin Verification" : "Purchased Successfully"}
+                  </div>
+                  {product.isManualFulfillment && (
+                      <div className="text-zinc-400 font-medium text-[10px] uppercase tracking-widest mt-2 bg-black/20 px-3 py-1.5 rounded-lg border border-white/5">
+                        {product.estimatedTime ? `Estimated Wait: ${product.estimatedTime}` : "Check Profile > My Orders"}
+                      </div>
+                  )}
                 </div>
                 {orderLink && (
                     <div className="mt-3 break-all bg-green-950/50 px-3 py-2 rounded-lg text-center text-xs">
@@ -196,16 +208,20 @@ export function ProductDetail() {
             {purchaseError && <p className="text-red-500 text-xs font-bold mb-4 text-center">{purchaseError}</p>}
             
             <div className="flex flex-col sm:flex-row gap-3">
-              {!user ? (
-                <Link to="/login" className="flex-1">
-                  <Button className="w-full text-sm py-6 bg-zinc-100 hover:bg-white text-black font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                    Sign In to Purchase
-                  </Button>
-                </Link>
-              ) : (
-                <Button onClick={handlePurchase} className="flex-1 text-sm py-6 bg-green-600 hover:bg-green-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(34,197,94,0.2)]">
-                  Buy Now - {currentPrice.toFixed(0)}{settings?.currencySymbol || "৳"}
-                </Button>
+              {((currentPrice !== undefined && currentPrice !== null) || (product.options && product.options.length > 0)) && (
+                <>
+                  {!user ? (
+                    <Link to="/login" className="flex-1">
+                      <Button className="w-full text-sm py-6 bg-zinc-100 hover:bg-white text-black font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                        Sign In to Purchase
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button onClick={handlePurchase} className="flex-1 text-sm py-6 bg-green-600 hover:bg-green-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                      {currentPrice !== undefined && currentPrice !== null ? `Buy Now - ${currentPrice.toFixed(0)}${settings?.currencySymbol || "৳"}` : "Select a Package"}
+                    </Button>
+                  )}
+                </>
               )}
 
               {product.whatsappNumber && (
@@ -221,7 +237,8 @@ export function ProductDetail() {
                     if (num.startsWith('01')) {
                       num = '88' + num;
                     }
-                    const msg = `Hello! I would like to instantly buy:\n*${currentTitle}*\nPrice: ${settings?.currencySymbol || "৳"}${currentPrice.toFixed(2)}${userInput ? `\n\n${product.requiredUserInputLabel}: ${userInput}` : ''}`;
+                    const priceText = currentPrice !== undefined && currentPrice !== null ? `\nPrice: ${settings?.currencySymbol || "৳"}${currentPrice.toFixed(2)}` : '';
+                    const msg = `Hello! I would like to instantly buy:\n*${currentTitle}*${priceText}${userInput ? `\n\n${product.requiredUserInputLabel}: ${userInput}` : ''}`;
                     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
                   }}
                   className="flex-1 text-sm py-6 border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10 font-bold uppercase tracking-widest"
@@ -232,6 +249,7 @@ export function ProductDetail() {
             </div>
           </div>
         </div>
+        )}
 
       </div>
     </div>

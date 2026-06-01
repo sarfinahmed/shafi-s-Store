@@ -24,7 +24,13 @@ export function Login() {
       }
       navigate("/");
     } catch (err: any) {
-      setError(err.message || "Failed to authenticate");
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || (err.message && err.message.includes('auth/invalid-credential'))) {
+        setError("Wrong email or password.");
+      } else if (err.code === 'auth/email-already-in-use' || (err.message && err.message.includes('auth/email-already-in-use'))) {
+        setError("An account with this email already exists.");
+      } else {
+        setError(err.message || "Failed to authenticate");
+      }
     }
   };
 

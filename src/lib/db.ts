@@ -8,6 +8,7 @@ export interface User {
   bio: string;
   avatarUrl?: string;
   isAdmin: boolean;
+  isBanned?: boolean;
   balance?: number;
   purchasedProducts?: string[];
 }
@@ -35,7 +36,7 @@ export interface Product {
   id: string;
   title: string;
   description: string;
-  price: number;
+  price?: number;
   imageUrl?: string;
   category?: string;
   requiredUserInputLabel?: string;
@@ -43,6 +44,9 @@ export interface Product {
   whatsappNumber?: string;
   isManualFulfillment?: boolean;
   options?: { name: string; price: number }[];
+  estimatedTime?: string;
+  isActive?: boolean;
+  sortOrder?: number;
   createdAt: number;
 }
 
@@ -327,9 +331,15 @@ class FirebaseDatabase {
 
   // --- Products ---
   async getProducts(): Promise<Product[]> {
-    const q = query(collection(dbInit, "products"), orderBy("createdAt", "desc"));
+    const q = query(collection(dbInit, "products"));
     const snap = await getDocs(q);
-    return snap.docs.map(d => d.data() as Product);
+    const products = snap.docs.map(d => d.data() as Product);
+    return products.sort((a, b) => {
+      const orderA = a.sortOrder ?? 999999;
+      const orderB = b.sortOrder ?? 999999;
+      if (orderA !== orderB) return orderA - orderB;
+      return b.createdAt - a.createdAt;
+    });
   }
 
   async getProduct(id: string): Promise<Product | null> {

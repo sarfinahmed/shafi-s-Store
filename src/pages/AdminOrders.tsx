@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import { db, Order } from "../lib/db";
 import { useConfig } from "../lib/config";
 import { Button, Input } from "../components/ui";
+import { Download, Search } from "lucide-react";
 
 export function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const { settings } = useConfig();
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed" | "rejected">("all");
   const [actionLinkId, setActionLinkId] = useState<string | null>(null);
   const [actionLinkInput, setActionLinkInput] = useState("");
 
@@ -32,12 +35,74 @@ export function AdminOrders() {
     loadData();
   };
 
+  const handleExportCSV = () => {
+    const headers = ["Date", "User Email", "Product", "User Input", "Price", "Status", "Delivery Link"];
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(",") + "\n"
+      + orders.map(o => {
+          return [
+            `"${new Date(o.createdAt).toLocaleString().replace(/"/g, '""')}"`,
+            `"${o.userEmail.replace(/"/g, '""')}"`,
+            `"${o.productTitle.replace(/"/g, '""')}"`,
+            `"${(o.userInput || "").replace(/"/g, '""')}"`,
+            o.price,
+            `"${o.status || 'completed'}"`,
+            `"${(o.deliveryLink || "").replace(/"/g, '""')}"`
+          ].join(",");
+        }).join("\n");
+        
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredOrders = orders.filter(o => {
+    const matchesSearch = 
+      o.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      o.productTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (o.userInput || "").toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || (o.status || "completed") === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-6 md:space-y-8 p-4 md:p-12 max-w-5xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-white">Orders</h1>
           <p className="text-zinc-500 mt-1 font-medium">History of all user purchases.</p>
+        </div>
+        
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto">
+          <select 
+            value={statusFilter} 
+            onChange={(e: any) => setStatusFilter(e.target.value)}
+            className="bg-[#111] border border-zinc-800 text-zinc-300 text-sm rounded-xl px-3 py-2 w-full md:w-auto outline-none"
+          >
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <div className="relative flex-1 md:w-64 w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
+            <Input 
+              placeholder="Search orders..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-[#111] border-zinc-800"
+            />
+          </div>
+          <Button onClick={handleExportCSV} variant="outline" className="flex items-center gap-2 border-zinc-800 text-zinc-300 hover:text-white w-full md:w-auto justify-center">
+            <Download className="w-4 h-4" />
+            Export CSV
+          </Button>
         </div>
       </div>
 
@@ -56,7 +121,11 @@ export function AdminOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-900 text-zinc-300">
-              {orders.map((order) => (
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 font-medium">No orders found.</td>
+                </tr>
+              ) : filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-zinc-900/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-500">
                     {new Date(order.createdAt).toLocaleString()}
@@ -71,7 +140,7 @@ export function AdminOrders() {
                     {order.userInput || <span className="text-zinc-600 italic">None</span>}
                   </td>
                   <td className="px-6 py-4 font-black tracking-tight text-white text-right">
-                    {settings?.currencySymbol || "৳"}{order.price.toFixed(2)}
+                    {order.price !== undefined && order.price !== null ? `${settings?.currencySymbol || "৳"}${order.price.toFixed(2)}` : "-"}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`text-xs px-2 py-1 rounded-full font-bold uppercase tracking-widest ${

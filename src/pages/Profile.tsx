@@ -260,7 +260,9 @@ export function Profile() {
                         <span className={`text-[10px] md:text-xs px-2 py-1 rounded-full font-bold uppercase tracking-widest ${!o.status || o.status === 'completed' ? 'bg-green-950 text-green-500' : o.status === 'rejected' ? 'bg-red-950 text-red-500' : 'bg-amber-950 text-amber-500'}`}>
                           {o.status || "completed"}
                         </span>
-                        <div className="text-xs font-black tracking-tight text-white">{settings?.currencySymbol || "৳"}{o.price?.toFixed(2)}</div>
+                        <div className="text-xs font-black tracking-tight text-white">
+                          {o.price !== undefined && o.price !== null ? `${settings?.currencySymbol || "৳"}${o.price.toFixed(2)}` : "-"}
+                        </div>
                       </div>
                     </div>
                     {(!o.status || o.status === 'completed') && o.deliveryLink && (

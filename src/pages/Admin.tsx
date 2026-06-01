@@ -3,7 +3,7 @@ import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
 import { db, Product, User, SocialLink } from "../lib/db";
 import { Button, Input, Textarea } from "../components/ui";
-import { Plus, Trash2, CheckCircle, Edit } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Edit, Eye, EyeOff, ArrowUp, ArrowDown } from "lucide-react";
 
 export function Admin() {
   const { user } = useAuth();
@@ -21,8 +21,10 @@ export function Admin() {
   const [newRequiredUserInputLabel, setNewRequiredUserInputLabel] = useState("");
   const [newDeliveryLink, setNewDeliveryLink] = useState("");
   const [newWhatsappNumber, setNewWhatsappNumber] = useState("");
+  const [newEstimatedTime, setNewEstimatedTime] = useState("");
+  const [newSortOrder, setNewSortOrder] = useState("");
   const [newIsManualFulfillment, setNewIsManualFulfillment] = useState(false);
-  const [newOptionsStr, setNewOptionsStr] = useState("");
+  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string}[]>([]);
 
   const [notification, setNotification] = useState("");
 
@@ -47,58 +49,49 @@ export function Admin() {
   };
 
   const handleSaveProduct = async () => {
-    if (!newTitle || !newPrice) return;
+    if (!newTitle) return;
     
     let parsedOptions: { name: string; price: number }[] | undefined = undefined;
-    if (newOptionsStr.trim()) {
-      parsedOptions = newOptionsStr.split("\n")
-        .map(line => line.trim())
-        .filter(line => line.includes(":"))
-        .map(line => {
-          const parts = line.split(":");
-          return { name: parts[0].trim(), price: parseFloat(parts[1].trim()) };
-        })
-        .filter(opt => !isNaN(opt.price));
+    const validOptions = newOptionsArr.filter(opt => opt.name.trim() !== "" && opt.price.trim() !== "");
+    if (validOptions.length > 0) {
+      parsedOptions = validOptions.map(opt => ({
+        name: opt.name.trim(),
+        price: parseFloat(opt.price) || 0
+      }));
     }
 
-    if (editingProduct) {
-      const productData: any = {
+    const setProductData = () => {
+      const data: any = {
         title: newTitle,
         description: newDesc,
-        price: parseFloat(newPrice),
         imageUrl: newImageUrl,
         category: newCategory,
         requiredUserInputLabel: newRequiredUserInputLabel,
         deliveryLink: newDeliveryLink,
         whatsappNumber: newWhatsappNumber,
+        estimatedTime: newEstimatedTime,
         isManualFulfillment: newIsManualFulfillment,
+        sortOrder: newSortOrder.trim() !== "" ? parseInt(newSortOrder, 10) : null,
       };
-      if (parsedOptions && parsedOptions.length > 0) {
-        productData.options = parsedOptions;
+      if (newPrice.trim()) {
+        data.price = parseFloat(newPrice);
       } else {
-        productData.options = [];
+        data.price = null;
       }
+      if (parsedOptions && parsedOptions.length > 0) {
+        data.options = parsedOptions;
+      } else {
+        data.options = [];
+      }
+      return data;
+    };
 
+    if (editingProduct) {
+      const productData = setProductData();
       await db.updateProduct(editingProduct.id, productData);
       notify("Product updated successfully");
     } else {
-      const productData: any = {
-        title: newTitle,
-        description: newDesc,
-        price: parseFloat(newPrice),
-        imageUrl: newImageUrl,
-        category: newCategory,
-        requiredUserInputLabel: newRequiredUserInputLabel,
-        deliveryLink: newDeliveryLink,
-        whatsappNumber: newWhatsappNumber,
-        isManualFulfillment: newIsManualFulfillment,
-      };
-      if (parsedOptions && parsedOptions.length > 0) {
-        productData.options = parsedOptions;
-      } else {
-        productData.options = [];
-      }
-
+      const productData = setProductData();
       await db.addProduct(productData);
       notify("Product added successfully");
     }
@@ -113,8 +106,10 @@ export function Admin() {
     setNewRequiredUserInputLabel("");
     setNewDeliveryLink("");
     setNewWhatsappNumber("");
+    setNewEstimatedTime("");
+    setNewSortOrder("");
     setNewIsManualFulfillment(false);
-    setNewOptionsStr("");
+    setNewOptionsArr([]);
     loadData();
   };
 
@@ -122,14 +117,16 @@ export function Admin() {
     setEditingProduct(product);
     setNewTitle(product.title);
     setNewDesc(product.description || "");
-    setNewPrice(product.price.toString());
+    setNewPrice(product.price !== undefined && product.price !== null ? product.price.toString() : "");
     setNewImageUrl(product.imageUrl || "");
     setNewCategory(product.category || "");
     setNewRequiredUserInputLabel(product.requiredUserInputLabel || "");
     setNewDeliveryLink(product.deliveryLink || "");
     setNewWhatsappNumber(product.whatsappNumber || "");
+    setNewEstimatedTime(product.estimatedTime || "");
+    setNewSortOrder(product.sortOrder !== undefined && product.sortOrder !== null ? product.sortOrder.toString() : "");
     setNewIsManualFulfillment(product.isManualFulfillment || false);
-    setNewOptionsStr(product.options ? product.options.map(o => `${o.name} : ${o.price}`).join("\n") : "");
+    setNewOptionsArr(product.options ? product.options.map(o => ({ name: o.name, price: o.price.toString() })) : []);
     setShowAddProduct(true);
   };
 
@@ -137,6 +134,36 @@ export function Admin() {
   const handleDeleteProduct = async (id: string) => {
     await db.removeProduct(id);
     notify("Product removed");
+    loadData();
+  };
+
+  const handleToggleVisibility = async (id: string, currentStatus: boolean) => {
+    await db.updateProduct(id, { isActive: !currentStatus });
+    notify(`Product ${!currentStatus ? 'is now visible' : 'is now hidden'}`);
+    loadData();
+  };
+
+  const handleMoveProduct = async (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === products.length - 1) return;
+
+    const currentConfigs = products.map((p, i) => ({ id: p.id, sortOrder: p.sortOrder !== undefined && p.sortOrder !== null ? p.sortOrder : (i + 1) * 10 }));
+    
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+    const p1 = currentConfigs[index];
+    const p2 = currentConfigs[targetIndex];
+
+    const temp = p1.sortOrder;
+    p1.sortOrder = p2.sortOrder;
+    p2.sortOrder = temp;
+
+    await Promise.all([
+      db.updateProduct(p1.id, { sortOrder: p1.sortOrder }),
+      db.updateProduct(p2.id, { sortOrder: p2.sortOrder })
+    ]);
+    
+    notify("Product order updated");
     loadData();
   };
 
@@ -168,8 +195,9 @@ export function Admin() {
             setNewRequiredUserInputLabel("");
             setNewDeliveryLink("");
             setNewWhatsappNumber("");
+            setNewEstimatedTime("");
             setNewIsManualFulfillment(false);
-            setNewOptionsStr("");
+            setNewOptionsArr([]);
             setShowAddProduct(!showAddProduct);
           }}>
             <Plus className="w-4 h-4 mr-2" /> Add Product
@@ -186,22 +214,61 @@ export function Admin() {
             </datalist>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input placeholder="Product Title" value={newTitle} onChange={e => setNewTitle(e.target.value)} />
-              <Input type="number" placeholder="Price" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
+              <Input type="number" placeholder="Price (leave empty for none)" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
               <Input placeholder="Category (e.g. Featured Products)" list="category-list" value={newCategory} onChange={e => setNewCategory(e.target.value)} />
               <Input placeholder="Image URL (optional)" value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)} />
               <Input placeholder="Input Label (e.g. Player ID)" value={newRequiredUserInputLabel} onChange={e => setNewRequiredUserInputLabel(e.target.value)} />
+              <Input placeholder="Estimated Wait Time (e.g. 5-10 Minutes)" value={newEstimatedTime} onChange={e => setNewEstimatedTime(e.target.value)} />
+              <Input type="number" placeholder="Order Priority (1 = top, empty = bottom)" value={newSortOrder} onChange={e => setNewSortOrder(e.target.value)} />
               <Input placeholder="Delivery Link (given after purchase)" value={newDeliveryLink} onChange={e => setNewDeliveryLink(e.target.value)} />
               <Input placeholder="Specific WhatsApp (e.g. 88017XX)" value={newWhatsappNumber} onChange={e => setNewWhatsappNumber(e.target.value)} />
               <Textarea placeholder="Description" className="md:col-span-2 whitespace-pre-wrap" value={newDesc} onChange={e => setNewDesc(e.target.value)} />
-              <Textarea 
-                placeholder="Product Options / Packages (Format: Name : Price)
-Weekly : 158
-Monthly : 790
-Leave empty for single item." 
-                className="md:col-span-2 font-mono whitespace-pre-wrap" 
-                value={newOptionsStr} 
-                onChange={e => setNewOptionsStr(e.target.value)} 
-              />
+              
+              <div className="md:col-span-2 space-y-3 bg-[#111] p-4 rounded-2xl border border-zinc-800">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Packages / Options</label>
+                  <Button variant="outline" size="sm" onClick={() => setNewOptionsArr([...newOptionsArr, {name: '', price: ''}])}>
+                    <Plus className="w-4 h-4 mr-1" /> Add Package
+                  </Button>
+                </div>
+                {newOptionsArr.length === 0 && (
+                  <p className="text-xs text-zinc-600 font-medium">Leave empty for a single-item product.</p>
+                )}
+                {newOptionsArr.map((opt, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <Input 
+                      placeholder="Package Name (e.g. Weekly)" 
+                      value={opt.name} 
+                      onChange={e => {
+                        const updated = [...newOptionsArr];
+                        updated[idx].name = e.target.value;
+                        setNewOptionsArr(updated);
+                      }} 
+                    />
+                    <Input 
+                      type="number" 
+                      placeholder="Price" 
+                      value={opt.price} 
+                      onChange={e => {
+                        const updated = [...newOptionsArr];
+                        updated[idx].price = e.target.value;
+                        setNewOptionsArr(updated);
+                      }} 
+                    />
+                    <Button 
+                      variant="ghost" 
+                      className="text-red-500 hover:text-red-400 hover:bg-red-950/30 px-3"
+                      onClick={() => {
+                        const updated = newOptionsArr.filter((_, i) => i !== idx);
+                        setNewOptionsArr(updated);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
               <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-400">
                 <input 
                   type="checkbox" 
@@ -217,7 +284,7 @@ Leave empty for single item."
                 setShowAddProduct(false);
                 setEditingProduct(null);
               }}>Cancel</Button>
-              <Button onClick={handleSaveProduct} disabled={!newTitle || !newPrice}>Save Product</Button>
+              <Button onClick={handleSaveProduct} disabled={!newTitle}>Save Product</Button>
             </div>
           </div>
         )}
@@ -233,7 +300,7 @@ Leave empty for single item."
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-900 text-zinc-300">
-                {products.map((product) => (
+                {products.map((product, index) => (
                   <tr key={product.id} className="hover:bg-zinc-900/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
@@ -241,20 +308,56 @@ Leave empty for single item."
                           {product.imageUrl ? <img src={product.imageUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-4 h-4 border border-zinc-700 opacity-30"></div>}
                         </div>
                         <div className="overflow-hidden">
-                          <div className="font-bold text-white truncate">{product.title}</div>
+                          <div className="flex items-center gap-2">
+                            <div className={`font-bold truncate ${product.isActive === false ? 'text-zinc-500' : 'text-white'}`}>{product.title}</div>
+                            {product.isActive === false && (
+                              <span className="bg-zinc-900 text-zinc-400 text-[9px] px-1.5 py-0.5 rounded font-black tracking-widest uppercase border border-zinc-800">Hidden</span>
+                            )}
+                          </div>
                           <div className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 truncate mt-1">
                             {product.category ? `${product.category} • ` : ""}{product.description || "No description"}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-black text-white">{settings?.currencySymbol || "৳"}{product.price.toFixed(2)}</td>
+                    <td className="px-6 py-4 font-black text-white">
+                      {product.price !== undefined && product.price !== null ? `${settings?.currencySymbol || "৳"}${product.price.toFixed(2)}` : "-"}
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(product)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-950/30 w-10 h-10 p-0 rounded-xl">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleMoveProduct(index, 'up')}
+                          disabled={index === 0}
+                          className="text-zinc-500 hover:text-white hover:bg-zinc-800 w-8 h-8 p-0 rounded-xl disabled:opacity-30"
+                          title="Move Up"
+                        >
+                          <ArrowUp className="w-4 h-4 mx-auto" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleMoveProduct(index, 'down')}
+                          disabled={index === products.length - 1}
+                          className="text-zinc-500 hover:text-white hover:bg-zinc-800 w-8 h-8 p-0 rounded-xl disabled:opacity-30"
+                          title="Move Down"
+                        >
+                          <ArrowDown className="w-4 h-4 mx-auto" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleToggleVisibility(product.id, product.isActive !== false)} 
+                          className={`w-10 h-10 p-0 rounded-xl ${product.isActive !== false ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-amber-500 hover:text-amber-400 hover:bg-amber-950/30'}`}
+                          title={product.isActive !== false ? "Hide Product" : "Show Product"}
+                        >
+                          {product.isActive !== false ? <EyeOff className="w-5 h-5 mx-auto" /> : <Eye className="w-5 h-5 mx-auto" />}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(product)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-950/30 w-10 h-10 p-0 rounded-xl" title="Edit Product">
                           <Edit className="w-5 h-5 mx-auto" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteProduct(product.id)} className="text-red-500 hover:text-red-400 hover:bg-red-950/30 w-10 h-10 p-0 rounded-xl">
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteProduct(product.id)} className="text-red-500 hover:text-red-400 hover:bg-red-950/30 w-10 h-10 p-0 rounded-xl" title="Delete Product">
                           <Trash2 className="w-5 h-5 mx-auto" />
                         </Button>
                       </div>

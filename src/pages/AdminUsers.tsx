@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import { db, User } from "../lib/db";
-import { Button } from "../components/ui";
-import { Trash2, CheckCircle } from "lucide-react";
+import { Button, Input } from "../components/ui";
+import { Trash2, CheckCircle, ShieldAlert, Shield, Ban, Unlock, Search as SearchIcon } from "lucide-react";
 
 export function AdminUsers() {
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [notification, setNotification] = useState("");
 
   const loadData = async () => {
@@ -35,6 +36,24 @@ export function AdminUsers() {
     loadData();
   };
 
+  const handleToggleBan = async (id: string, currentStatus: boolean) => {
+    await db.updateUser(id, { isBanned: !currentStatus });
+    notify(currentStatus ? "User unbanned" : "User banned");
+    loadData();
+  };
+
+  const handleToggleAdmin = async (id: string, currentStatus: boolean) => {
+    await db.updateUser(id, { isAdmin: !currentStatus });
+    notify(currentStatus ? "Admin rights revoked" : "User is now an admin");
+    loadData();
+  };
+
+  const filteredUsers = users.filter(u => 
+    u.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (u.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6 md:space-y-8 p-4 md:p-12 max-w-5xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -42,16 +61,28 @@ export function AdminUsers() {
           <h1 className="text-3xl font-black tracking-tighter text-white">Users</h1>
           <p className="text-zinc-500 mt-1 font-medium">Manage platform accounts.</p>
         </div>
-        {notification && (
-          <div className="flex items-center text-green-400 bg-green-950/30 border border-green-900/50 px-4 py-2 rounded-xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
-            <CheckCircle className="w-5 h-5 mr-2" />
-            {notification}
+        
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
+          <div className="relative w-full md:w-64">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
+            <Input 
+              placeholder="Search users..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-[#111] border-zinc-800"
+            />
           </div>
-        )}
+          {notification && (
+            <div className="flex items-center text-green-400 bg-green-950/30 border border-green-900/50 px-4 py-2 rounded-xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
+              <CheckCircle className="w-5 h-5 mr-2" />
+              {notification}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-xl font-bold text-white">Total ({users.length})</h2>
+        <h2 className="text-xl font-bold text-white">Total ({filteredUsers.length} of {users.length})</h2>
         <div className="bg-[#0a0a0a] rounded-3xl border border-zinc-900 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -64,7 +95,11 @@ export function AdminUsers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-900 text-zinc-300">
-                {users.map((u) => (
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-zinc-500 font-medium">No users found.</td>
+                  </tr>
+                ) : filteredUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-zinc-900/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
@@ -81,17 +116,48 @@ export function AdminUsers() {
                           Admin
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#111] text-zinc-500 border border-zinc-800">
-                          User
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#111] text-zinc-500 border border-zinc-800">
+                            User
+                          </span>
+                          {u.isBanned && (
+                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-950 text-red-500 border border-red-900/50">
+                               Banned
+                             </span>
+                          )}
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {!u.isAdmin && (
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-400 hover:bg-red-950/30 w-10 h-10 p-0 rounded-xl">
-                          <Trash2 className="w-5 h-5 mx-auto" />
-                        </Button>
-                      )}
+                        <div className="flex items-center justify-end gap-2">
+                           <Button 
+                             variant="ghost" 
+                             size="sm" 
+                             onClick={() => handleToggleBan(u.id, !!u.isBanned)} 
+                             className={`w-10 h-10 p-0 rounded-xl ${u.isBanned ? 'text-green-500 hover:text-green-400 hover:bg-green-950/30' : 'text-amber-500 hover:text-amber-400 hover:bg-amber-950/30'}`}
+                             title={u.isBanned ? "Unban User" : "Ban User"}
+                           >
+                             {u.isBanned ? <Unlock className="w-5 h-5 mx-auto" /> : <Ban className="w-5 h-5 mx-auto" />}
+                           </Button>
+                           <Button 
+                             variant="ghost" 
+                             size="sm" 
+                             onClick={() => handleToggleAdmin(u.id, !!u.isAdmin)} 
+                             className={`w-10 h-10 p-0 rounded-xl ${u.isAdmin ? 'text-amber-500 hover:text-amber-400 hover:bg-amber-950/30' : 'text-blue-500 hover:text-blue-400 hover:bg-blue-950/30'}`}
+                             title={u.isAdmin ? "Remove Admin" : "Make Admin"}
+                           >
+                             {u.isAdmin ? <ShieldAlert className="w-5 h-5 mx-auto" /> : <Shield className="w-5 h-5 mx-auto" />}
+                           </Button>
+                           <Button 
+                             variant="ghost" 
+                             size="sm" 
+                             onClick={() => handleDeleteUser(u.id)} 
+                             className="text-red-500 hover:text-red-400 hover:bg-red-950/30 w-10 h-10 p-0 rounded-xl"
+                             title="Delete User"
+                           >
+                             <Trash2 className="w-5 h-5 mx-auto" />
+                           </Button>
+                        </div>
                     </td>
                   </tr>
                 ))}
