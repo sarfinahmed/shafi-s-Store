@@ -218,7 +218,7 @@ class FirebaseDatabase {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: `✅ New Order!\nUser: ${u.email}\nProduct: ${product.title}\nAmount: ${product.price}`
+        text: `✅ New Order!\nUser: ${u.email}\nProduct: ${product.title}\nAmount: ${product.price}${userInput ? `\nUser Input: ${userInput}` : ''}`
       })
     }).catch(console.error);
 
