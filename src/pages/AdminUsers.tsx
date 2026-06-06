@@ -51,21 +51,23 @@ export function AdminUsers() {
     loadData();
   };
 
-  const handleAdjustBalance = async (u: User) => {
-    const amt = parseFloat(balanceAmount);
-    if (!amt || !balanceReason) {
-      alert("Please enter amount and reason");
+  const handleAdjustBalance = async (u: User, action: 'add' | 'deduct') => {
+    let amt = parseFloat(balanceAmount);
+    if (!amt || amt <= 0 || !balanceReason) {
+      alert("Please enter a valid positive amount and a reason");
       return;
     }
     
-    const newBalance = (u.balance || 0) + amt;
+    const change = action === 'add' ? amt : -amt;
+    const newBalance = (u.balance || 0) + change;
+    
     await db.updateUser(u.id, { balance: newBalance });
-    await db.logTransaction(u.id, Math.abs(amt), amt > 0 ? "deposit" : "purchase", `Admin adjustment: ${balanceReason}`);
+    await db.logTransaction(u.id, amt, action === 'add' ? "deposit" : "purchase", `Admin ${action}: ${balanceReason}`);
     
     setAdjustUserId(null);
     setBalanceAmount("");
     setBalanceReason("");
-    notify(`Balance adjusted for ${u.email}`);
+    notify(`Balance updated for ${u.email}`);
     loadData();
   };
 
@@ -111,6 +113,7 @@ export function AdminUsers() {
                 <tr>
                   <th className="px-6 py-4">User</th>
                   <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">Balance</th>
                   <th className="px-6 py-4">Role</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
@@ -118,7 +121,7 @@ export function AdminUsers() {
               <tbody className="divide-y divide-zinc-900 text-zinc-300">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-zinc-500 font-medium">No users found.</td>
+                    <td colSpan={5} className="px-6 py-12 text-center text-zinc-500 font-medium">No users found.</td>
                   </tr>
                 ) : filteredUsers.map((u) => (
                   <React.Fragment key={u.id}>
@@ -132,6 +135,7 @@ export function AdminUsers() {
                       </div>
                     </td>
                     <td className="px-6 py-4 font-medium text-zinc-500">{u.email}</td>
+                    <td className="px-6 py-4 font-bold text-white">৳{(u.balance || 0).toFixed(2)}</td>
                     <td className="px-6 py-4">
                       {u.isAdmin ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-white text-black">
@@ -193,13 +197,13 @@ export function AdminUsers() {
                   </tr>
                   {adjustUserId === u.id && (
                   <tr key={`${u.id}-adjust`} className="bg-[#111] animate-in fade-in slide-in-from-top-1">
-                    <td colSpan={4} className="px-6 py-4">
+                    <td colSpan={5} className="px-6 py-4">
                       <div className="flex flex-col md:flex-row items-end gap-3 max-w-2xl ml-auto">
                         <div className="flex-1 w-full space-y-1">
-                          <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest pl-1">Amount (+ to add, - to deduct)</label>
+                          <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest pl-1">Amount</label>
                           <Input 
                             type="number" 
-                            placeholder="e.g. 500 or -200" 
+                            placeholder="e.g. 500" 
                             className="bg-black border-zinc-900"
                             value={balanceAmount}
                             onChange={e => setBalanceAmount(e.target.value)}
@@ -208,14 +212,15 @@ export function AdminUsers() {
                         <div className="flex-1 w-full space-y-1">
                           <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest pl-1">Reason</label>
                           <Input 
-                            placeholder="e.g. Refund or Bonus" 
+                            placeholder="e.g. Deposit or Penalty" 
                             className="bg-black border-zinc-900"
                             value={balanceReason}
                             onChange={e => setBalanceReason(e.target.value)}
                           />
                         </div>
                         <div className="flex gap-2 w-full md:w-auto">
-                          <Button onClick={() => handleAdjustBalance(u)} size="sm">Update</Button>
+                          <Button onClick={() => handleAdjustBalance(u, 'add')} size="sm" className="bg-green-600 hover:bg-green-700 text-white">Add (+)</Button>
+                          <Button onClick={() => handleAdjustBalance(u, 'deduct')} size="sm" className="bg-red-600 hover:bg-red-700 text-white">Deduct (-)</Button>
                           <Button variant="ghost" size="sm" onClick={() => setAdjustUserId(null)}>Cancel</Button>
                         </div>
                       </div>

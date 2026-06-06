@@ -211,8 +211,7 @@ export function Admin() {
     await db.addProduct({
       ...rest,
       title: `${product.title} (Copy)`,
-      isActive: false,
-      createdAt: Date.now()
+      isActive: false
     });
     notify("Product duplicated as hidden");
     loadData();
