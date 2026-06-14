@@ -62,7 +62,7 @@ export function AdminUsers() {
     const newBalance = (u.balance || 0) + change;
     
     await db.updateUser(u.id, { balance: newBalance });
-    await db.logTransaction(u.id, amt, action === 'add' ? "deposit" : "purchase", `Admin ${action}: ${balanceReason}`);
+    await db.logTransaction(u.id, amt, action === 'add' ? "deposit" : "admin_deduction", action === 'add' ? `Admin Added: ${balanceReason}` : `Admin Deducted: ${balanceReason}`);
     
     setAdjustUserId(null);
     setBalanceAmount("");

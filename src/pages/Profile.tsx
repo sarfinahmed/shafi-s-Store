@@ -35,6 +35,9 @@ export function Profile() {
   const [newUrl, setNewUrl] = useState("");
   const [newLogo, setNewLogo] = useState("");
 
+  const [typeFilter, setTypeFilter] = useState<"all" | "deposit" | "purchase" | "admin_deduction">("all");
+  const [activeView, setActiveView] = useState<"none" | "deposits" | "spent" | "orders">("none");
+
   useEffect(() => {
     if (user && user.isAdmin) {
       db.getLinks(user.id).then(setLinks);
@@ -49,6 +52,12 @@ export function Profile() {
   if (!user) {
     return <div className="text-center py-20 text-zinc-500">Please sign in to view your profile.</div>;
   }
+
+  const lifetimeDeposit = transactions.filter(t => t.type === 'deposit').reduce((acc, t) => acc + t.amount, 0);
+  const lifetimeSpent = transactions.filter(t => t.type === 'purchase' || t.type === 'admin_deduction').reduce((acc, t) => acc + t.amount, 0);
+
+  const filteredTransactions = transactions.filter(t => typeFilter === "all" || (typeFilter === 'purchase' ? (t.type === 'purchase' || t.type === 'admin_deduction') : t.type === typeFilter));
+
 
   const handleSaveProfile = async () => {
     await updateProfile({ name, bio, avatarUrl });
@@ -148,31 +157,75 @@ export function Profile() {
       {!user.isAdmin ? (
         // Regular User Dashboard
         <div className="space-y-4 md:space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-            <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl md:rounded-3xl p-5 md:p-6 flex flex-col items-center text-center">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-zinc-900 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 md:mb-4">
-                <Wallet className="w-5 h-5 md:w-7 md:h-7 text-zinc-400" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl p-4 md:p-6 flex flex-col items-center text-center hover:border-zinc-800 transition-colors">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-zinc-900 rounded-xl flex items-center justify-center mb-3">
+                <Wallet className="w-5 h-5 text-zinc-400" />
               </div>
-              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1 md:mb-2">Current Balance</p>
-              <h3 className="text-2xl md:text-3xl font-black text-white mb-3 md:mb-4">{settings?.currencySymbol || "৳"}{(user.balance || 0).toFixed(2)}</h3>
+              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Balance</p>
+              <h3 className="text-xl md:text-2xl font-black text-white mb-3">{settings?.currencySymbol || "৳"}{(user.balance || 0).toFixed(2)}</h3>
               <Button 
                 variant="outline" 
-                className="text-xs md:text-sm h-9 md:h-10 px-3 md:px-4"
+                className="text-[10px] md:text-xs h-8 px-3"
                 onClick={() => {
                   setShowDeposit(!showDeposit);
                   setDepositMsg("");
                 }}
               >
-                <Plus className="w-3 h-3 mr-2" /> Add Money
+                <Plus className="w-3 h-3 mr-1" /> Add Funds
               </Button>
             </div>
             
-            <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl md:rounded-3xl p-5 md:p-6 flex flex-col items-center text-center">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-zinc-900 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 md:mb-4">
-                <Package className="w-5 h-5 md:w-7 md:h-7 text-zinc-400" />
+            <div 
+              className={`bg-[#0a0a0a] border ${activeView === 'deposits' ? 'border-zinc-500' : 'border-zinc-900'} rounded-2xl p-4 md:p-6 flex flex-col items-center text-center cursor-pointer hover:border-zinc-800 transition-colors`}
+              onClick={() => {
+                if (activeView === 'deposits') {
+                  setActiveView('none');
+                  setTypeFilter('all');
+                } else {
+                  setActiveView('deposits');
+                  setTypeFilter('deposit');
+                }
+              }}
+            >
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-3">
+                <ArrowUpRight className="w-5 h-5 text-green-500" />
               </div>
-              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1 md:mb-2">Purchased Products</p>
-              <h3 className="text-2xl md:text-3xl font-black text-white">{(user.purchasedProducts || []).length}</h3>
+              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Deposits</p>
+              <h3 className="text-xl md:text-2xl font-black text-white">{settings?.currencySymbol || "৳"}{lifetimeDeposit.toFixed(2)}</h3>
+              <p className="text-[10px] text-zinc-600 font-bold mt-2 hover:text-white transition-colors">{activeView === 'deposits' ? 'Hide History' : 'Tap to filter History'}</p>
+            </div>
+
+            <div 
+              className={`bg-[#0a0a0a] border ${activeView === 'spent' ? 'border-zinc-500' : 'border-zinc-900'} rounded-2xl p-4 md:p-6 flex flex-col items-center text-center cursor-pointer hover:border-zinc-800 transition-colors`}
+              onClick={() => {
+                if (activeView === 'spent') {
+                  setActiveView('none');
+                  setTypeFilter('all');
+                } else {
+                  setActiveView('spent');
+                  setTypeFilter('purchase');
+                }
+              }}
+            >
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-3">
+                <ArrowDownLeft className="w-5 h-5 text-red-500" />
+              </div>
+              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Spent</p>
+              <h3 className="text-xl md:text-2xl font-black text-white">{settings?.currencySymbol || "৳"}{lifetimeSpent.toFixed(2)}</h3>
+              <p className="text-[10px] text-zinc-600 font-bold mt-2 hover:text-white transition-colors">{activeView === 'spent' ? 'Hide History' : 'Tap to filter History'}</p>
+            </div>
+
+            <div 
+              className={`bg-[#0a0a0a] border ${activeView === 'orders' ? 'border-zinc-500' : 'border-zinc-900'} rounded-2xl p-4 md:p-6 flex flex-col items-center text-center cursor-pointer hover:border-zinc-800 transition-colors`}
+              onClick={() => setActiveView(activeView === 'orders' ? 'none' : 'orders')}
+            >
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-zinc-900 rounded-xl flex items-center justify-center mb-3">
+                <Package className="w-5 h-5 text-zinc-400" />
+              </div>
+              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Products</p>
+              <h3 className="text-xl md:text-2xl font-black text-white">{(user.purchasedProducts || []).length}</h3>
+              <p className="text-[10px] text-zinc-600 font-bold mt-2 hover:text-white transition-colors">{activeView === 'orders' ? 'Hide Orders' : 'Tap to view Orders'}</p>
             </div>
           </div>
 
@@ -226,7 +279,7 @@ export function Profile() {
             </motion.div>
           )}
 
-          {deposits.length > 0 && (
+          {activeView === 'deposits' && deposits.length > 0 && (
             <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl md:rounded-3xl overflow-hidden p-5 md:p-6">
               <h3 className="text-base md:text-lg font-black text-white mb-3 md:mb-4 flex items-center gap-2">
                 <History className="w-4 h-4 text-zinc-500" />
@@ -251,14 +304,16 @@ export function Profile() {
             </div>
           )}
 
-          {transactions.length > 0 && (
+          {(activeView === 'deposits' || activeView === 'spent') && filteredTransactions.length > 0 && (
             <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl md:rounded-3xl overflow-hidden p-5 md:p-6">
-              <h3 className="text-base md:text-lg font-black text-white mb-3 md:mb-4 flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-zinc-500" />
-                Transaction History
-              </h3>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                <h3 className="text-base md:text-lg font-black text-white flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-zinc-500" />
+                  Transaction History
+                </h3>
+              </div>
               <div className="space-y-3">
-                {transactions.map(t => (
+                {filteredTransactions.map(t => (
                   <div key={t.id} className="flex items-start justify-between p-4 bg-[#111] rounded-2xl border border-zinc-800">
                     <div className="flex items-start gap-4">
                       <div className={`mt-1 p-2 rounded-lg ${t.type === 'deposit' || t.type === 'refund' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
@@ -277,8 +332,12 @@ export function Profile() {
               </div>
             </div>
           )}
+          
+          {(activeView === 'deposits' || activeView === 'spent') && transactions.length > 0 && filteredTransactions.length === 0 && (
+             <div className="text-center py-8 text-zinc-500 text-sm font-medium">No transactions found for the selected filter.</div>
+          )}
 
-          {orders.length > 0 && (
+          {activeView === 'orders' && orders.length > 0 && (
             <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl md:rounded-3xl overflow-hidden p-5 md:p-6">
               <h3 className="text-base md:text-lg font-black text-white mb-3 md:mb-4">My Orders</h3>
               <div className="space-y-3">

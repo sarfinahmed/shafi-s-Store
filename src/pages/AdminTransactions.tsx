@@ -8,7 +8,7 @@ export function AdminTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "deposit" | "purchase" | "refund">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "deposit" | "purchase" | "refund" | "admin_deduction">("all");
   const { settings } = useConfig();
 
   const loadData = async () => {
@@ -74,6 +74,7 @@ export function AdminTransactions() {
             <option value="deposit">Deposits</option>
             <option value="purchase">Purchases</option>
             <option value="refund">Refunds</option>
+            <option value="admin_deduction">Admin Deductions</option>
           </select>
           <div className="relative flex-1 md:w-64 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />

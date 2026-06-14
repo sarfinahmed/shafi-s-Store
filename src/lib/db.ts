@@ -17,7 +17,7 @@ export interface Transaction {
   id: string;
   userId: string;
   amount: number;
-  type: "deposit" | "purchase" | "refund";
+  type: "deposit" | "purchase" | "refund" | "admin_deduction";
   description: string;
   createdAt: number;
 }
