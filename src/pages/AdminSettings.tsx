@@ -18,6 +18,13 @@ export function AdminSettings() {
   const [noticeBanner, setNoticeBanner] = useState(settings?.noticeBanner || "");
   const [maintenanceMode, setMaintenanceMode] = useState(settings?.maintenanceMode || false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(settings?.paymentMethods || []);
+  const [freeFireApiUrl, setFreeFireApiUrl] = useState(settings?.freeFireApiUrl || "");
+  const [freeFireApiKey, setFreeFireApiKey] = useState(settings?.freeFireApiKey || "");
+  const [garenaShellApiUrl, setGarenaShellApiUrl] = useState(settings?.garenaShellApiUrl || "");
+  const [garenaShellApiKey, setGarenaShellApiKey] = useState(settings?.garenaShellApiKey || "");
+  const [unipinApiUrl, setUnipinApiUrl] = useState(settings?.unipinApiUrl || "");
+  const [unipinApiKey, setUnipinApiKey] = useState(settings?.unipinApiKey || "");
+  
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState("");
 
@@ -41,7 +48,13 @@ export function AdminSettings() {
       telegramChatId,
       noticeBanner,
       maintenanceMode,
-      paymentMethods
+      paymentMethods,
+      freeFireApiUrl,
+      freeFireApiKey,
+      garenaShellApiUrl,
+      garenaShellApiKey,
+      unipinApiUrl,
+      unipinApiKey
     });
     setSaving(false);
     notify("Settings saved successfully");
@@ -69,7 +82,7 @@ export function AdminSettings() {
             <Input 
               value={appName} 
               onChange={e => setAppName(e.target.value)} 
-              placeholder="e.g. ShafiLink"
+              placeholder="e.g. Shafi Topup"
             />
             <p className="text-xs text-zinc-600 mt-2 font-medium">This appears in the header and footer.</p>
           </div>
@@ -188,6 +201,82 @@ export function AdminSettings() {
               {paymentMethods.length === 0 && (
                 <p className="text-zinc-600 text-sm font-medium">No payment methods added. Users won't see any deposit options.</p>
               )}
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-6 border-t border-zinc-900">
+          <h2 className="text-lg font-black text-white mb-4">Auto Topup API Configuration</h2>
+          <p className="text-xs text-zinc-500 mb-6 font-medium">Configure credentials for external Topup APIs. These can be used in product configurations.</p>
+          
+          <div className="space-y-6">
+            <div className="bg-[#111] p-5 rounded-2xl border border-zinc-800 space-y-4">
+              <h3 className="font-bold text-zinc-300 flex items-center gap-2">Free Fire API</h3>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API URL</label>
+                <Input 
+                  value={freeFireApiUrl} 
+                  onChange={e => setFreeFireApiUrl(e.target.value)} 
+                  placeholder="e.g. https://api.example.com/ff"
+                  className="bg-black border-zinc-900"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API Key</label>
+                <Input 
+                  value={freeFireApiKey} 
+                  onChange={e => setFreeFireApiKey(e.target.value)} 
+                  placeholder="Enter API Key"
+                  type="password"
+                  className="bg-black border-zinc-900"
+                />
+              </div>
+            </div>
+
+            <div className="bg-[#111] p-5 rounded-2xl border border-zinc-800 space-y-4">
+              <h3 className="font-bold text-zinc-300 flex items-center gap-2">Garena Shell API</h3>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API URL</label>
+                <Input 
+                  value={garenaShellApiUrl} 
+                  onChange={e => setGarenaShellApiUrl(e.target.value)} 
+                  placeholder="e.g. https://api.example.com/garena"
+                  className="bg-black border-zinc-900"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API Key</label>
+                <Input 
+                  value={garenaShellApiKey} 
+                  onChange={e => setGarenaShellApiKey(e.target.value)} 
+                  placeholder="Enter API Key"
+                  type="password"
+                  className="bg-black border-zinc-900"
+                />
+              </div>
+            </div>
+
+            <div className="bg-[#111] p-5 rounded-2xl border border-zinc-800 space-y-4">
+              <h3 className="font-bold text-zinc-300 flex items-center gap-2">Unipin API</h3>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API URL</label>
+                <Input 
+                  value={unipinApiUrl} 
+                  onChange={e => setUnipinApiUrl(e.target.value)} 
+                  placeholder="e.g. https://api.example.com/unipin"
+                  className="bg-black border-zinc-900"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API Key</label>
+                <Input 
+                  value={unipinApiKey} 
+                  onChange={e => setUnipinApiKey(e.target.value)} 
+                  placeholder="Enter API Key"
+                  type="password"
+                  className="bg-black border-zinc-900"
+                />
+              </div>
             </div>
           </div>
         </div>

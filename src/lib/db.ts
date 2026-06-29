@@ -88,6 +88,13 @@ export interface AppSettings {
   telegramChatId?: string;
   noticeBanner?: string;
   maintenanceMode?: boolean;
+  // Auto Topup APIs
+  freeFireApiUrl?: string;
+  freeFireApiKey?: string;
+  garenaShellApiUrl?: string;
+  garenaShellApiKey?: string;
+  unipinApiUrl?: string;
+  unipinApiKey?: string;
 }
 
 class FirebaseDatabase {
@@ -101,7 +108,7 @@ class FirebaseDatabase {
       return data;
     }
     const defaultSettings: AppSettings = {
-      appName: "Shafi's Store",
+      appName: "Shafi Topup",
       heroTitle: "Discover Premium Products",
       heroSubtitle: "Browse the latest offerings and curate your own digital showcase.",
       currencySymbol: "৳"
