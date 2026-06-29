@@ -56,6 +56,9 @@ export interface Product {
   estimatedTime?: string;
   isActive?: boolean;
   sortOrder?: number;
+  codes?: string[]; // For automatic code delivery (e.g., UNIPIN)
+  redeemLink?: string;
+  tutorialVideoUrl?: string;
   createdAt: number;
 }
 
@@ -68,6 +71,9 @@ export interface Order {
   price: number;
   userInput?: string;
   deliveryLink?: string;
+  deliveredCode?: string; // Automatically delivered code
+  redeemLink?: string;
+  tutorialVideoUrl?: string;
   status?: "pending" | "completed" | "rejected";
   createdAt: number;
 }
@@ -204,6 +210,24 @@ class FirebaseDatabase {
     const balance = u.balance || 0;
     if (balance < product.price) throw new Error("Insufficient funds");
     
+    // Check if it has codes
+    let deliveredCode = undefined;
+    
+    // Always fetch latest product data to check codes to prevent race condition
+    const productRef = doc(dbInit, "products", product.id);
+    const productSnap = await getDoc(productRef);
+    if (productSnap.exists()) {
+      const dbProduct = productSnap.data() as Product;
+      if (dbProduct.codes && dbProduct.codes.length > 0) {
+        deliveredCode = dbProduct.codes[0];
+        const remainingCodes = dbProduct.codes.slice(1);
+        await updateDoc(productRef, { codes: remainingCodes });
+      } else if (dbProduct.codes !== undefined && dbProduct.codes.length === 0) {
+         // If they configured it as a code product but ran out of codes
+         throw new Error("Product out of stock (No codes left)");
+      }
+    }
+
     await updateDoc(userRef, {
       balance: balance - product.price,
       purchasedProducts: [...(u.purchasedProducts || []), product.id]
@@ -220,8 +244,11 @@ class FirebaseDatabase {
       productTitle: product.title,
       price: product.price,
       userInput: userInput || "",
-      deliveryLink: product.isManualFulfillment ? "" : (product.deliveryLink || ""),
-      status: product.isManualFulfillment ? "pending" : "completed",
+      deliveryLink: product.isManualFulfillment && !deliveredCode ? "" : (product.deliveryLink || ""),
+      deliveredCode,
+      redeemLink: product.redeemLink,
+      tutorialVideoUrl: product.tutorialVideoUrl,
+      status: deliveredCode ? "completed" : (product.isManualFulfillment ? "pending" : "completed"),
       createdAt: Date.now()
     };
     await setDoc(orderRef, order);
@@ -236,7 +263,7 @@ class FirebaseDatabase {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chatId,
-          text: `✅ New Order!\nUser: ${u.email}\nProduct: ${product.title}\nAmount: ${product.price}${userInput ? `\nUser Input: ${userInput}` : ''}`
+          text: `✅ New Order!\nUser: ${u.email}\nProduct: ${product.title}\nAmount: ${product.price}${userInput ? `\nUser Input: ${userInput}` : ''}${deliveredCode ? `\nCode Delivered: ${deliveredCode}` : ''}`
         })
       }).catch(console.error);
     }

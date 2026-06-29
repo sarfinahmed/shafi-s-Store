@@ -133,8 +133,13 @@ export function AdminOrders() {
                   <td className="px-6 py-4">
                     <div className="font-bold text-white">{order.userEmail}</div>
                   </td>
-                  <td className="px-6 py-4 font-bold text-white">
-                    {order.productTitle}
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-white">{order.productTitle}</div>
+                    {order.deliveredCode && (
+                      <div className="text-[10px] font-mono text-green-400 bg-green-950/30 px-1 py-0.5 rounded mt-1 inline-block border border-green-900/50">
+                        Code: {order.deliveredCode}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-zinc-400">
                     {order.userInput || <span className="text-zinc-600 italic">None</span>}

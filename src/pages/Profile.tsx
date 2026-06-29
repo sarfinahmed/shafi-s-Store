@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
 import { db, SocialLink, Transaction } from "../lib/db";
@@ -7,6 +8,7 @@ import { ExternalLink, Plus, Trash2, Wallet, Package, Copy, History, ArrowUpRigh
 import { motion } from "motion/react";
 
 export function Profile() {
+  const [searchParams] = useSearchParams();
   const { user, updateProfile, deleteAccount } = useAuth();
   const { settings } = useConfig();
   const [links, setLinks] = useState<SocialLink[]>([]);
@@ -36,7 +38,9 @@ export function Profile() {
   const [newLogo, setNewLogo] = useState("");
 
   const [typeFilter, setTypeFilter] = useState<"all" | "deposit" | "purchase" | "admin_deduction">("all");
-  const [activeView, setActiveView] = useState<"none" | "deposits" | "spent" | "orders">("none");
+  const [activeView, setActiveView] = useState<"none" | "deposits" | "spent" | "orders" | "codes">(
+    searchParams.get("view") === "codes" ? "codes" : "none"
+  );
 
   useEffect(() => {
     if (user && user.isAdmin) {
@@ -157,7 +161,7 @@ export function Profile() {
       {!user.isAdmin ? (
         // Regular User Dashboard
         <div className="space-y-4 md:space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl p-4 md:p-6 flex flex-col items-center text-center hover:border-zinc-800 transition-colors">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-zinc-900 rounded-xl flex items-center justify-center mb-3">
                 <Wallet className="w-5 h-5 text-zinc-400" />
@@ -223,9 +227,21 @@ export function Profile() {
               <div className="w-10 h-10 md:w-12 md:h-12 bg-zinc-900 rounded-xl flex items-center justify-center mb-3">
                 <Package className="w-5 h-5 text-zinc-400" />
               </div>
-              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Products</p>
+              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">My Orders</p>
               <h3 className="text-xl md:text-2xl font-black text-white">{(user.purchasedProducts || []).length}</h3>
               <p className="text-[10px] text-zinc-600 font-bold mt-2 hover:text-white transition-colors">{activeView === 'orders' ? 'Hide Orders' : 'Tap to view Orders'}</p>
+            </div>
+
+            <div 
+              className={`col-span-2 md:col-span-1 bg-[#0a0a0a] border ${activeView === 'codes' ? 'border-zinc-500' : 'border-zinc-900'} rounded-2xl p-4 md:p-6 flex flex-col items-center text-center cursor-pointer hover:border-zinc-800 transition-colors`}
+              onClick={() => setActiveView(activeView === 'codes' ? 'none' : 'codes')}
+            >
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-3">
+                <Copy className="w-5 h-5 text-green-500" />
+              </div>
+              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">My Codes</p>
+              <h3 className="text-xl md:text-2xl font-black text-white">{orders.filter(o => o.deliveredCode).length}</h3>
+              <p className="text-[10px] text-zinc-600 font-bold mt-2 hover:text-white transition-colors">{activeView === 'codes' ? 'Hide Codes' : 'Tap to view Codes'}</p>
             </div>
           </div>
 
@@ -357,12 +373,93 @@ export function Profile() {
                         </div>
                       </div>
                     </div>
-                    {(!o.status || o.status === 'completed') && o.deliveryLink && (
-                       <div className="mt-1 break-all bg-green-950/20 border border-green-900/50 p-3 rounded-xl text-xs flex flex-col gap-1">
+                    {(!o.status || o.status === 'completed') && (o.deliveryLink || o.deliveredCode || o.redeemLink || o.tutorialVideoUrl) && (
+                       <div className="mt-1 break-all bg-green-950/20 border border-green-900/50 p-3 rounded-xl text-xs flex flex-col gap-2">
                           <span className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Delivery Info:</span>
-                          <a href={o.deliveryLink} target="_blank" rel="noreferrer" className="text-green-400 hover:text-white underline underline-offset-4">{o.deliveryLink}</a>
+                          
+                          {o.deliveredCode && (
+                            <div className="bg-black/50 p-2 rounded border border-green-900/30 flex items-center justify-between">
+                              <span className="font-mono text-green-400 font-bold">{o.deliveredCode}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 w-6 p-0 text-zinc-500 hover:text-white"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(o.deliveredCode);
+                                  // Optional: show a small toast here if available, or just copy
+                                }}
+                                title="Copy Code"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
+
+                          {o.redeemLink && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Redeem At:</span>
+                              <a href={o.redeemLink} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-white underline underline-offset-4">{o.redeemLink}</a>
+                            </div>
+                          )}
+
+                          {o.tutorialVideoUrl && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Tutorial:</span>
+                              <a href={o.tutorialVideoUrl} target="_blank" rel="noreferrer" className="text-pink-400 hover:text-white underline underline-offset-4">Watch Video</a>
+                            </div>
+                          )}
+
+                          {o.deliveryLink && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Link:</span>
+                              <a href={o.deliveryLink} target="_blank" rel="noreferrer" className="text-green-400 hover:text-white underline underline-offset-4">{o.deliveryLink}</a>
+                            </div>
+                          )}
                        </div>
                     )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeView === 'codes' && orders.filter(o => o.deliveredCode).length > 0 && (
+            <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl md:rounded-3xl p-4 md:p-6 mb-6">
+              <h3 className="text-base md:text-lg font-black text-white mb-3 md:mb-4">My Codes</h3>
+              <div className="space-y-3">
+                {orders.filter(o => o.deliveredCode).map((o, i) => (
+                  <div key={i} className="bg-[#111] border border-zinc-800 rounded-xl p-3 md:p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-bold text-white text-sm md:text-base">{o.productTitle}</div>
+                      <div className="text-[10px] md:text-xs text-zinc-500">{new Date(o.createdAt).toLocaleString()}</div>
+                    </div>
+                    <div className="bg-black/50 p-3 rounded-lg border border-green-900/30 flex items-center justify-between mb-2">
+                      <span className="font-mono text-green-400 font-black text-sm tracking-wider">{o.deliveredCode}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 px-3 text-green-400 hover:text-white bg-green-950/30 hover:bg-green-900/50"
+                        onClick={() => {
+                          navigator.clipboard.writeText(o.deliveredCode || "");
+                        }}
+                        title="Copy Code"
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-4 mt-2">
+                      {o.redeemLink && (
+                        <a href={o.redeemLink} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:text-white font-bold uppercase tracking-widest underline underline-offset-4 flex items-center">
+                          Redeem Here
+                        </a>
+                      )}
+                      {o.tutorialVideoUrl && (
+                        <a href={o.tutorialVideoUrl} target="_blank" rel="noreferrer" className="text-[10px] text-pink-400 hover:text-white font-bold uppercase tracking-widest underline underline-offset-4 flex items-center">
+                          Watch Tutorial
+                        </a>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

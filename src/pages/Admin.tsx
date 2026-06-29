@@ -33,6 +33,9 @@ export function Admin() {
   const [newSortOrder, setNewSortOrder] = useState("");
   const [newIsManualFulfillment, setNewIsManualFulfillment] = useState(false);
   const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string}[]>([]);
+  const [newCodes, setNewCodes] = useState("");
+  const [newRedeemLink, setNewRedeemLink] = useState("");
+  const [newTutorialVideoUrl, setNewTutorialVideoUrl] = useState("");
 
   const [notification, setNotification] = useState("");
 
@@ -111,6 +114,9 @@ export function Admin() {
         estimatedTime: newEstimatedTime,
         isManualFulfillment: newIsManualFulfillment,
         sortOrder: newSortOrder.trim() !== "" ? parseInt(newSortOrder, 10) : null,
+        codes: newCodes.split('\n').map(c => c.trim()).filter(c => c),
+        redeemLink: newRedeemLink,
+        tutorialVideoUrl: newTutorialVideoUrl,
       };
       if (newPrice.trim()) {
         data.price = parseFloat(newPrice);
@@ -149,6 +155,9 @@ export function Admin() {
     setNewSortOrder("");
     setNewIsManualFulfillment(false);
     setNewOptionsArr([]);
+    setNewCodes("");
+    setNewRedeemLink("");
+    setNewTutorialVideoUrl("");
     loadData();
   };
 
@@ -166,6 +175,9 @@ export function Admin() {
     setNewSortOrder(product.sortOrder !== undefined && product.sortOrder !== null ? product.sortOrder.toString() : "");
     setNewIsManualFulfillment(product.isManualFulfillment || false);
     setNewOptionsArr(product.options ? product.options.map(o => ({ name: o.name, price: o.price.toString() })) : []);
+    setNewCodes((product.codes || []).join('\n'));
+    setNewRedeemLink(product.redeemLink || "");
+    setNewTutorialVideoUrl(product.tutorialVideoUrl || "");
     setShowAddProduct(true);
   };
 
@@ -413,7 +425,30 @@ export function Admin() {
                 ))}
               </div>
 
-              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-400">
+              <div className="md:col-span-2 space-y-3 bg-[#111] p-4 rounded-2xl border border-zinc-800 mt-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Auto Code Delivery (Optional)</label>
+                </div>
+                <p className="text-xs text-zinc-600 font-medium">Add codes one per line. If provided, one code will be dispensed automatically per order. Great for UNIPIN or gift cards.</p>
+                <Textarea 
+                  placeholder="Enter codes here (one per line)..." 
+                  className="whitespace-pre-wrap h-32" 
+                  value={newCodes} 
+                  onChange={e => setNewCodes(e.target.value)} 
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Redeem Link</label>
+                    <Input placeholder="e.g. https://shop.garena.sg/app" value={newRedeemLink} onChange={e => setNewRedeemLink(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Tutorial Video URL</label>
+                    <Input placeholder="e.g. https://youtube.com/watch?v=..." value={newTutorialVideoUrl} onChange={e => setNewTutorialVideoUrl(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-400 mt-4">
                 <input 
                   type="checkbox" 
                   checked={newIsManualFulfillment} 

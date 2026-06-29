@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { db, Product } from "../lib/db";
 import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
@@ -8,6 +8,7 @@ import { ArrowLeft, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
 
 export function ProductDetail() {
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,10 @@ export function ProductDetail() {
     try {
       const productToBuy = { ...product, price: currentPrice, title: currentTitle };
       const order = await db.purchaseProduct(user.id, productToBuy, userInput);
+      if (order.deliveredCode) {
+        navigate("/profile?view=codes");
+        return;
+      }
       if (order.deliveryLink) {
         setOrderLink(order.deliveryLink);
       }
