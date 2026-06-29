@@ -37,14 +37,20 @@ export function Home() {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      <div className="text-center max-w-2xl mx-auto px-4 mt-2.5">
-        <h1 className="text-xl md:text-3xl font-black tracking-tighter mb-1.5 md:mb-2 text-white">
-          {settings?.heroTitle || "আপনাকে স্বাগতম Shafi’s Store এ"}
-        </h1>
-        <p className="text-xs md:text-sm font-medium text-zinc-400">
-          {settings?.heroSubtitle || "Quality Products, Trusted Service."}
-        </p>
-      </div>
+      {(settings?.heroTitle || settings?.heroSubtitle) && (
+        <div className="text-center max-w-2xl mx-auto px-4 mt-2.5">
+          {settings?.heroTitle && (
+            <h1 className="text-xl md:text-3xl font-black tracking-tighter mb-1.5 md:mb-2 text-white">
+              {settings.heroTitle}
+            </h1>
+          )}
+          {settings?.heroSubtitle && (
+            <p className="text-xs md:text-sm font-medium text-zinc-400">
+              {settings.heroSubtitle}
+            </p>
+          )}
+        </div>
+      )}
 
       {settings?.noticeBanner && (
         <div className="mx-4 md:mx-0 bg-orange-950/30 border border-orange-900/50 rounded-lg p-2.5 flex items-center gap-2">

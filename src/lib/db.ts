@@ -172,12 +172,20 @@ class FirebaseDatabase {
   }
 
   async getTransactions(userId?: string): Promise<Transaction[]> {
-    let q = query(collection(dbInit, "transactions"), orderBy("createdAt", "desc"));
+    let q;
     if (userId) {
-      q = query(collection(dbInit, "transactions"), where("userId", "==", userId), orderBy("createdAt", "desc"));
+      q = query(collection(dbInit, "transactions"), where("userId", "==", userId));
+    } else {
+      q = query(collection(dbInit, "transactions"), orderBy("createdAt", "desc"));
     }
+    
     const snap = await getDocs(q);
-    return snap.docs.map(d => d.data() as Transaction);
+    const transactions = snap.docs.map(d => d.data() as Transaction);
+    
+    if (userId) {
+      return transactions.sort((a, b) => b.createdAt - a.createdAt);
+    }
+    return transactions;
   }
 
   async purchaseProduct(userId: string, product: Product, userInput?: string): Promise<Order> {
