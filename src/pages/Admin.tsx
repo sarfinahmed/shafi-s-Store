@@ -32,7 +32,7 @@ export function Admin() {
   const [newEstimatedTime, setNewEstimatedTime] = useState("");
   const [newSortOrder, setNewSortOrder] = useState("");
   const [newIsManualFulfillment, setNewIsManualFulfillment] = useState(false);
-  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string}[]>([]);
+  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string}[]>([]);
   const [newCodes, setNewCodes] = useState("");
   const [newRedeemLink, setNewRedeemLink] = useState("");
   const [newTutorialVideoUrl, setNewTutorialVideoUrl] = useState("");
@@ -94,12 +94,21 @@ export function Admin() {
     if (!newTitle) return;
     
     let parsedOptions: { name: string; price: number }[] | undefined = undefined;
-    const validOptions = newOptionsArr.filter(opt => opt.name.trim() !== "" && opt.price.trim() !== "");
+    let optionCodes: Record<string, string[]> = {};
+    
+    const validOptions = newOptionsArr.filter(opt => opt.name.trim() !== "");
     if (validOptions.length > 0) {
       parsedOptions = validOptions.map(opt => ({
         name: opt.name.trim(),
         price: parseFloat(opt.price) || 0
       }));
+      
+      validOptions.forEach(opt => {
+        const codesList = opt.codes.split('\n').map(c => c.trim()).filter(c => c);
+        if (codesList.length > 0) {
+          optionCodes[opt.name.trim()] = codesList;
+        }
+      });
     }
 
     const setProductData = () => {
@@ -115,6 +124,7 @@ export function Admin() {
         isManualFulfillment: newIsManualFulfillment,
         sortOrder: newSortOrder.trim() !== "" ? parseInt(newSortOrder, 10) : null,
         codes: newCodes.split('\n').map(c => c.trim()).filter(c => c),
+        optionCodes: optionCodes,
         redeemLink: newRedeemLink,
         tutorialVideoUrl: newTutorialVideoUrl,
       };
@@ -174,7 +184,11 @@ export function Admin() {
     setNewEstimatedTime(product.estimatedTime || "");
     setNewSortOrder(product.sortOrder !== undefined && product.sortOrder !== null ? product.sortOrder.toString() : "");
     setNewIsManualFulfillment(product.isManualFulfillment || false);
-    setNewOptionsArr(product.options ? product.options.map(o => ({ name: o.name, price: o.price.toString() })) : []);
+    setNewOptionsArr(product.options ? product.options.map(o => ({ 
+      name: o.name, 
+      price: o.price.toString(),
+      codes: (product.optionCodes?.[o.name] || []).join('\n')
+    })) : []);
     setNewCodes((product.codes || []).join('\n'));
     setNewRedeemLink(product.redeemLink || "");
     setNewTutorialVideoUrl(product.tutorialVideoUrl || "");
@@ -391,45 +405,65 @@ export function Admin() {
                   <p className="text-xs text-zinc-600 font-medium">Leave empty for a single-item product.</p>
                 )}
                 {newOptionsArr.map((opt, idx) => (
-                  <div key={idx} className="flex gap-2 items-center">
-                    <Input 
-                      placeholder="Package Name (e.g. Weekly)" 
-                      value={opt.name} 
-                      onChange={e => {
-                        const updated = [...newOptionsArr];
-                        updated[idx].name = e.target.value;
-                        setNewOptionsArr(updated);
-                      }} 
-                    />
-                    <Input 
-                      type="number" 
-                      placeholder="Price" 
-                      value={opt.price} 
-                      onChange={e => {
-                        const updated = [...newOptionsArr];
-                        updated[idx].price = e.target.value;
-                        setNewOptionsArr(updated);
-                      }} 
-                    />
-                    <Button 
-                      variant="ghost" 
-                      className="text-red-500 hover:text-red-400 hover:bg-red-950/30 px-3"
-                      onClick={() => {
-                        const updated = newOptionsArr.filter((_, i) => i !== idx);
-                        setNewOptionsArr(updated);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  <div key={idx} className="space-y-2 bg-black/40 p-4 rounded-xl border border-zinc-800">
+                    <div className="flex gap-2 items-center">
+                      <Input 
+                        placeholder="Package Name (e.g. Weekly)" 
+                        value={opt.name} 
+                        onChange={e => {
+                          const updated = [...newOptionsArr];
+                          updated[idx].name = e.target.value;
+                          setNewOptionsArr(updated);
+                        }} 
+                      />
+                      <Input 
+                        type="number" 
+                        placeholder="Price" 
+                        value={opt.price} 
+                        onChange={e => {
+                          const updated = [...newOptionsArr];
+                          updated[idx].price = e.target.value;
+                          setNewOptionsArr(updated);
+                        }} 
+                      />
+                      <Button 
+                        variant="ghost" 
+                        className="text-red-500 hover:text-red-400 hover:bg-red-950/30 px-3"
+                        onClick={() => {
+                          const updated = newOptionsArr.filter((_, i) => i !== idx);
+                          setNewOptionsArr(updated);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5 ml-1">
+                        Codes for {opt.name || 'this package'} ({opt.codes.split('\n').filter(c => c.trim()).length} in stock)
+                      </label>
+                      <Textarea 
+                        placeholder="Enter codes for this option (one per line)..." 
+                        className="text-xs h-20 bg-zinc-950 border-zinc-800"
+                        value={opt.codes}
+                        onChange={e => {
+                          const updated = [...newOptionsArr];
+                          updated[idx].codes = e.target.value;
+                          setNewOptionsArr(updated);
+                        }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
 
               <div className="md:col-span-2 space-y-3 bg-[#111] p-4 rounded-2xl border border-zinc-800 mt-4">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Auto Code Delivery (Optional)</label>
+                  <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Auto Code Delivery (Fallback / Global)</label>
+                  <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest bg-black/50 px-2 py-1 rounded border border-white/5">
+                    {newCodes.split('\n').filter(c => c.trim()).length} In Stock
+                  </span>
                 </div>
-                <p className="text-xs text-zinc-600 font-medium">Add codes one per line. If provided, one code will be dispensed automatically per order. Great for UNIPIN or gift cards.</p>
+                <p className="text-xs text-zinc-600 font-medium">Add codes one per line. These codes are used if no variant-specific codes are available.</p>
                 <Textarea 
                   placeholder="Enter codes here (one per line)..." 
                   className="whitespace-pre-wrap h-32" 

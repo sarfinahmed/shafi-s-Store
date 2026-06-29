@@ -57,7 +57,7 @@ export function ProductDetail() {
 
     try {
       const productToBuy = { ...product, price: currentPrice, title: currentTitle };
-      const order = await db.purchaseProduct(user.id, productToBuy, userInput);
+      const order = await db.purchaseProduct(user.id, productToBuy, userInput, selectedOption?.name);
       if (order.deliveredCode) {
         navigate("/profile?view=codes");
         return;
@@ -125,9 +125,16 @@ export function ProductDetail() {
                     }`}
                   >
                     <span className={`text-xs md:text-sm font-bold uppercase tracking-wide ${selectedOption === opt ? 'text-white' : 'text-zinc-300'}`}>{opt.name}</span>
-                    <span className={`text-sm md:text-base font-black ${selectedOption === opt ? 'text-green-400' : 'text-orange-400'}`}>
-                      {opt.price.toFixed(0)}{settings?.currencySymbol || "৳"}
-                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className={`text-sm md:text-base font-black ${selectedOption === opt ? 'text-green-400' : 'text-orange-400'}`}>
+                        {opt.price.toFixed(0)}{settings?.currencySymbol || "৳"}
+                      </span>
+                      {product.optionCodes?.[opt.name] !== undefined && (
+                        <span className={`text-[9px] font-bold uppercase tracking-tighter mt-0.5 ${product.optionCodes[opt.name].length > 0 ? 'text-zinc-500' : 'text-red-500'}`}>
+                          {product.optionCodes[opt.name].length > 0 ? `${product.optionCodes[opt.name].length} In Stock` : 'Out of Stock'}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -135,7 +142,14 @@ export function ProductDetail() {
           </div>
         ) : product.price !== undefined && product.price !== null ? (
            <div className="bg-[#0a0a0a] rounded-2xl border border-zinc-900 p-5 flex justify-between items-center">
-              <h2 className="text-sm font-bold text-white uppercase tracking-widest">Price</h2>
+              <div className="flex flex-col">
+                <h2 className="text-sm font-bold text-white uppercase tracking-widest">Price</h2>
+                {product.codes !== undefined && (
+                  <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${product.codes.length > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {product.codes.length > 0 ? `${product.codes.length} In Stock` : 'Out of Stock'}
+                  </span>
+                )}
+              </div>
               <div className="text-xl font-black text-orange-400">
                 {product.price.toFixed(0)}{settings?.currencySymbol || "৳"}
               </div>

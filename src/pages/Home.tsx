@@ -109,7 +109,28 @@ export function Home() {
                       <p className="text-[10px] text-zinc-500 uppercase font-bold truncate flex-1">
                         {product.description || "Premium Product"}
                       </p>
-                      {product.estimatedTime && (
+                      {/* Stock Indicator */}
+                      {(product.codes !== undefined || product.optionCodes !== undefined) && (
+                        <div className="ml-2 flex items-center gap-1.5 flex-shrink-0">
+                          {(() => {
+                            const totalStock = (product.codes?.length || 0) + 
+                              Object.values(product.optionCodes || {}).reduce((acc, codes) => acc + (codes?.length || 0), 0);
+                            
+                            return totalStock > 0 ? (
+                              <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">{totalStock} Stock</span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">Sold Out</span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
+                      {product.estimatedTime && !product.codes && !product.optionCodes && (
                         <span className="text-[8px] md:text-[9px] bg-[#1a1a1a] border border-zinc-800 text-amber-500 px-1.5 py-0.5 rounded font-black tracking-widest uppercase ml-2 whitespace-nowrap">
                            {product.estimatedTime}
                         </span>

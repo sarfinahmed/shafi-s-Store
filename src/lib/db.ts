@@ -56,7 +56,8 @@ export interface Product {
   estimatedTime?: string;
   isActive?: boolean;
   sortOrder?: number;
-  codes?: string[]; // For automatic code delivery (e.g., UNIPIN)
+  codes?: string[]; // Generic codes
+  optionCodes?: Record<string, string[]>; // Codes mapped to option names (e.g., {"Weekly": ["CODE1"], "Monthly": ["CODE2"]})
   redeemLink?: string;
   tutorialVideoUrl?: string;
   createdAt: number;
@@ -70,6 +71,7 @@ export interface Order {
   productTitle: string;
   price: number;
   userInput?: string;
+  selectedOptionName?: string;
   deliveryLink?: string;
   deliveredCode?: string; // Automatically delivered code
   redeemLink?: string;
@@ -202,7 +204,7 @@ class FirebaseDatabase {
     return transactions;
   }
 
-  async purchaseProduct(userId: string, product: Product, userInput?: string): Promise<Order> {
+  async purchaseProduct(userId: string, product: Product, userInput?: string, selectedOptionName?: string): Promise<Order> {
     const userRef = doc(dbInit, "users", userId);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) throw new Error("User not found");
@@ -218,13 +220,29 @@ class FirebaseDatabase {
     const productSnap = await getDoc(productRef);
     if (productSnap.exists()) {
       const dbProduct = productSnap.data() as Product;
-      if (dbProduct.codes && dbProduct.codes.length > 0) {
+      
+      // Check for option-specific codes first
+      if (selectedOptionName && dbProduct.optionCodes && dbProduct.optionCodes[selectedOptionName]?.length > 0) {
+        const variantCodes = [...dbProduct.optionCodes[selectedOptionName]];
+        deliveredCode = variantCodes[0];
+        const remainingVariantCodes = variantCodes.slice(1);
+        
+        await updateDoc(productRef, {
+          [`optionCodes.${selectedOptionName}`]: remainingVariantCodes
+        });
+      } 
+      // Fallback to generic codes
+      else if (dbProduct.codes && dbProduct.codes.length > 0) {
         deliveredCode = dbProduct.codes[0];
         const remainingCodes = dbProduct.codes.slice(1);
         await updateDoc(productRef, { codes: remainingCodes });
-      } else if (dbProduct.codes !== undefined && dbProduct.codes.length === 0) {
-         // If they configured it as a code product but ran out of codes
-         throw new Error("Product out of stock (No codes left)");
+      } 
+      // If they configured it as a code product but ran out of codes for this specific variant or generic pool
+      else if (
+        (selectedOptionName && dbProduct.optionCodes?.[selectedOptionName] !== undefined) || 
+        dbProduct.codes !== undefined
+      ) {
+         throw new Error("Product out of stock (No codes left for this option)");
       }
     }
 
@@ -244,6 +262,7 @@ class FirebaseDatabase {
       productTitle: product.title,
       price: product.price,
       userInput: userInput || "",
+      selectedOptionName,
       deliveryLink: product.isManualFulfillment && !deliveredCode ? "" : (product.deliveryLink || ""),
       deliveredCode,
       redeemLink: product.redeemLink,
