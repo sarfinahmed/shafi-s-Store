@@ -14,7 +14,10 @@ export function AdminSettings() {
   const [heroSubtitle, setHeroSubtitle] = useState(settings?.heroSubtitle || "");
   const [currencySymbol, setCurrencySymbol] = useState(settings?.currencySymbol || "৳");
   const [adminWhatsappNumber, setAdminWhatsappNumber] = useState(settings?.adminWhatsappNumber || "");
-  const [telegramChatId, setTelegramChatId] = useState(settings?.telegramChatId || "");
+  const [telegramChatIds, setTelegramChatIds] = useState<string[]>(
+    settings?.telegramChatIds || (settings?.telegramChatId ? settings.telegramChatId.split(",").map(id => id.trim()).filter(id => id) : [])
+  );
+  const [newChatId, setNewChatId] = useState("");
   const [noticeBanner, setNoticeBanner] = useState(settings?.noticeBanner || "");
   const [maintenanceMode, setMaintenanceMode] = useState(settings?.maintenanceMode || false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(settings?.paymentMethods || []);
@@ -45,7 +48,7 @@ export function AdminSettings() {
       heroSubtitle,
       currencySymbol,
       adminWhatsappNumber,
-      telegramChatId,
+      telegramChatIds,
       noticeBanner,
       maintenanceMode,
       paymentMethods,
@@ -129,13 +132,40 @@ export function AdminSettings() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Telegram API Chat ID (Automatic Notifications)</label>
-            <Input 
-              value={telegramChatId} 
-              onChange={e => setTelegramChatId(e.target.value)} 
-              placeholder="e.g. 6891891678"
-            />
-            <p className="text-xs text-zinc-600 mt-2 font-medium">Add your chat ID to get automatic notifications via the connected Telegram Bot. You can find this using a bot like @userinfobot.</p>
+            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Telegram API Chat ID(s) (Automatic Notifications)</label>
+            <div className="space-y-2 mb-2">
+              {telegramChatIds.map((id, index) => (
+                <div key={index} className="flex items-center justify-between bg-black border border-zinc-900 rounded-md px-3 py-2">
+                  <span className="text-sm text-zinc-300">{id}</span>
+                  <button 
+                    onClick={() => setTelegramChatIds(telegramChatIds.filter((_, i) => i !== index))}
+                    className="text-red-500 hover:text-red-400 p-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input 
+                value={newChatId} 
+                onChange={e => setNewChatId(e.target.value)} 
+                placeholder="e.g. 6891891678"
+                className="bg-black border-zinc-900"
+              />
+              <Button 
+                onClick={() => {
+                  if (newChatId.trim() && !telegramChatIds.includes(newChatId.trim())) {
+                    setTelegramChatIds([...telegramChatIds, newChatId.trim()]);
+                    setNewChatId("");
+                  }
+                }}
+                variant="outline"
+              >
+                Add
+              </Button>
+            </div>
+            <p className="text-xs text-zinc-600 mt-2 font-medium">Add your chat ID(s) to get automatic notifications via the connected Telegram Bot. You can find this using a bot like @userinfobot.</p>
           </div>
           
           <div>

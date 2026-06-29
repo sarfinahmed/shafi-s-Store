@@ -86,6 +86,7 @@ export interface AppSettings {
   adminWhatsappNumber?: string;
   paymentMethods?: PaymentMethod[];
   telegramChatId?: string;
+  telegramChatIds?: string[];
   noticeBanner?: string;
   maintenanceMode?: boolean;
   // Auto Topup APIs
@@ -227,15 +228,18 @@ class FirebaseDatabase {
 
     // Call Telegram webhook
     const settings = await this.getSettings();
-    const chatId = settings?.telegramChatId || "6891891678";
-    fetch("https://api.telegram.org/bot8677363890:AAFeLJhBx91a17DVfdcnj43r3iS_1PyCu5o/sendMessage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: `✅ New Order!\nUser: ${u.email}\nProduct: ${product.title}\nAmount: ${product.price}${userInput ? `\nUser Input: ${userInput}` : ''}`
-      })
-    }).catch(console.error);
+    const chatIds = settings?.telegramChatIds?.length ? settings.telegramChatIds : (settings?.telegramChatId || "6891891678").split(",").map(id => id.trim()).filter(id => id);
+    
+    for (const chatId of chatIds) {
+      fetch("https://api.telegram.org/bot8677363890:AAFeLJhBx91a17DVfdcnj43r3iS_1PyCu5o/sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: `✅ New Order!\nUser: ${u.email}\nProduct: ${product.title}\nAmount: ${product.price}${userInput ? `\nUser Input: ${userInput}` : ''}`
+        })
+      }).catch(console.error);
+    }
 
     return order;
   }
@@ -281,15 +285,18 @@ class FirebaseDatabase {
 
     // Call Telegram webhook
     const settings = await this.getSettings();
-    const chatId = settings?.telegramChatId || "6891891678";
-    fetch("https://api.telegram.org/bot8677363890:AAFeLJhBx91a17DVfdcnj43r3iS_1PyCu5o/sendMessage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: `💰 New Deposit!\nUser: ${userEmail}\nAmount: ${amount}\nTransaction ID: ${trxId}`
-      })
-    }).catch(console.error);
+    const chatIds = settings?.telegramChatIds?.length ? settings.telegramChatIds : (settings?.telegramChatId || "6891891678").split(",").map(id => id.trim()).filter(id => id);
+    
+    for (const chatId of chatIds) {
+      fetch("https://api.telegram.org/bot8677363890:AAFeLJhBx91a17DVfdcnj43r3iS_1PyCu5o/sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: `💰 New Deposit!\nUser: ${userEmail}\nAmount: ${amount}\nTransaction ID: ${trxId}`
+        })
+      }).catch(console.error);
+    }
 
     return req;
   }
