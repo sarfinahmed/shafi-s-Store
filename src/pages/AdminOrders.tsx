@@ -123,7 +123,7 @@ export function AdminOrders() {
             <tbody className="divide-y divide-zinc-900 text-zinc-300">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 font-medium">No orders found.</td>
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-500 font-medium">No orders found.</td>
                 </tr>
               ) : filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-zinc-900/50 transition-colors">
@@ -134,7 +134,10 @@ export function AdminOrders() {
                     <div className="font-bold text-white">{order.userEmail}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-bold text-white">{order.productTitle}</div>
+                    <div className="font-bold text-white">
+                      {order.productTitle}
+                      {order.selectedOptionName && <span className="text-zinc-500 font-medium ml-2">({order.selectedOptionName})</span>}
+                    </div>
                     {order.deliveredCode && (
                       <div className="text-[10px] font-mono text-green-400 bg-green-950/30 px-1 py-0.5 rounded mt-1 inline-block border border-green-900/50">
                         Code: {order.deliveredCode}

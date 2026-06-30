@@ -1,16 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../lib/auth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Input } from "../components/ui";
 
 export function Login() {
-  const [isRegister, setIsRegister] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [isRegister, setIsRegister] = useState(searchParams.get("register") === "true");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const { loginWithEmail, registerWithEmail, loading } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setIsRegister(searchParams.get("register") === "true");
+  }, [searchParams]);
+
+  const toggleRegister = () => {
+    const newVal = !isRegister;
+    setIsRegister(newVal);
+    navigate(newVal ? "/login?register=true" : "/login", { replace: true });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +102,8 @@ export function Login() {
           {isRegister ? "Already have an account? " : "Don't have an account? "}
         </span>
         <button 
-          onClick={() => setIsRegister(!isRegister)} 
+          type="button"
+          onClick={toggleRegister} 
           className="text-white hover:underline decoration-zinc-500 underline-offset-4"
         >
           {isRegister ? "Sign In" : "Create one"}

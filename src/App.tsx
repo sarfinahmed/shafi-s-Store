@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { ConfigProvider } from "./lib/config";
+import { db } from "./lib/db";
 import { Layout } from "./components/Layout";
 import { AdminLayout } from "./components/AdminLayout";
 import { Home } from "./pages/Home";
@@ -37,11 +38,25 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function PageViewTracker() {
+  useEffect(() => {
+    // Record page view once per session per refresh
+    const hasRecorded = sessionStorage.getItem('page_view_recorded');
+    if (!hasRecorded) {
+      db.recordPageView().then(() => {
+        sessionStorage.setItem('page_view_recorded', 'true');
+      });
+    }
+  }, []);
+  return null;
+}
+
 export default function App() {
   return (
     <ConfigProvider>
       <AuthProvider>
         <BrowserRouter>
+          <PageViewTracker />
           <GlobalMaintenance />
           <Routes>
             {/* User App Routes */}

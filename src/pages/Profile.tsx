@@ -361,7 +361,10 @@ export function Profile() {
                   <div key={o.id} className="flex flex-col gap-3 p-4 bg-[#111] rounded-2xl border border-zinc-800">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-white font-bold text-sm md:text-base mb-1">{o.productTitle}</div>
+                        <div className="text-white font-bold text-sm md:text-base mb-1">
+                          {o.productTitle}
+                          {o.selectedOptionName && <span className="text-zinc-500 text-xs ml-2">({o.selectedOptionName})</span>}
+                        </div>
                         <div className="text-xs text-zinc-500 font-medium">{new Date(o.createdAt).toLocaleString()}</div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -430,7 +433,10 @@ export function Profile() {
                 {orders.filter(o => o.deliveredCode).map((o, i) => (
                   <div key={i} className="bg-[#111] border border-zinc-800 rounded-xl p-3 md:p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <div className="font-bold text-white text-sm md:text-base">{o.productTitle}</div>
+                      <div className="font-bold text-white text-sm md:text-base">
+                        {o.productTitle}
+                        {o.selectedOptionName && <span className="text-zinc-500 text-xs ml-2">({o.selectedOptionName})</span>}
+                      </div>
                       <div className="text-[10px] md:text-xs text-zinc-500">{new Date(o.createdAt).toLocaleString()}</div>
                     </div>
                     <div className="bg-black/50 p-3 rounded-lg border border-green-900/30 flex items-center justify-between mb-2">

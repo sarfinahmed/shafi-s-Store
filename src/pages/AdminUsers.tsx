@@ -114,6 +114,7 @@ export function AdminUsers() {
                   <th className="px-6 py-4">User</th>
                   <th className="px-6 py-4">Email</th>
                   <th className="px-6 py-4">Balance</th>
+                  <th className="px-6 py-4">Total Spent</th>
                   <th className="px-6 py-4">Role</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
@@ -121,7 +122,7 @@ export function AdminUsers() {
               <tbody className="divide-y divide-zinc-900 text-zinc-300">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-zinc-500 font-medium">No users found.</td>
+                    <td colSpan={7} className="px-6 py-12 text-center text-zinc-500 font-medium">No users found.</td>
                   </tr>
                 ) : filteredUsers.map((u) => (
                   <React.Fragment key={u.id}>
@@ -136,6 +137,7 @@ export function AdminUsers() {
                     </td>
                     <td className="px-6 py-4 font-medium text-zinc-500">{u.email}</td>
                     <td className="px-6 py-4 font-bold text-white">৳{(u.balance || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-bold text-amber-500">৳{(u.totalSpent || 0).toFixed(2)}</td>
                     <td className="px-6 py-4">
                       {u.isAdmin ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-white text-black">
@@ -197,7 +199,7 @@ export function AdminUsers() {
                   </tr>
                   {adjustUserId === u.id && (
                   <tr key={`${u.id}-adjust`} className="bg-[#111] animate-in fade-in slide-in-from-top-1">
-                    <td colSpan={5} className="px-6 py-4">
+                    <td colSpan={7} className="px-6 py-4">
                       <div className="flex flex-col md:flex-row items-end gap-3 max-w-2xl ml-auto">
                         <div className="flex-1 w-full space-y-1">
                           <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest pl-1">Amount</label>

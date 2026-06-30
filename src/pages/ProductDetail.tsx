@@ -38,6 +38,48 @@ export function ProductDetail() {
   const currentPrice = selectedOption ? selectedOption.price : product.price;
   const currentTitle = selectedOption ? `${product.title} - ${selectedOption.name}` : product.title;
 
+  const isActuallySoldOut = (() => {
+    if (product.isSoldOut) return true;
+    
+    if (selectedOption) {
+      if (product.optionCodes?.[selectedOption.name] !== undefined) {
+        return product.optionCodes[selectedOption.name].length === 0;
+      }
+      if (selectedOption.stockCount !== undefined && selectedOption.stockCount !== null) {
+        return selectedOption.stockCount <= 0;
+      }
+      return false; // Unlimited
+    } else {
+      // If no option is selected yet, check if ALL options are sold out
+      if (product.options && product.options.length > 0) {
+        let allSoldOut = true;
+        for (const opt of product.options) {
+          let optSoldOut = false;
+          if (product.optionCodes?.[opt.name] !== undefined) {
+            optSoldOut = product.optionCodes[opt.name].length === 0;
+          } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
+            optSoldOut = opt.stockCount <= 0;
+          }
+          if (!optSoldOut) {
+            allSoldOut = false;
+            break;
+          }
+        }
+        return allSoldOut;
+      } else {
+        if (product.codes !== undefined) {
+          return product.codes.length === 0;
+        }
+        if (product.stockCount !== undefined && product.stockCount !== null) {
+          return product.stockCount <= 0;
+        }
+        return false; // Unlimited
+      }
+    }
+  })();
+
+  const isLocked = product.isPremiumOnly && ((user?.totalSpent || 0) < 5000);
+
   const handlePurchase = async () => {
     if (!user) {
       setPurchaseError("Please sign in to purchase.");
@@ -71,6 +113,30 @@ export function ProductDetail() {
       setPurchaseError(e.message || "Purchase failed.");
     }
   };
+
+  if (isLocked) {
+    return (
+      <div className="max-w-2xl mx-auto py-20 px-4 text-center">
+        <Link to="/" className="inline-flex items-center text-xs font-medium text-zinc-500 hover:text-white mb-8 transition-colors">
+          <ArrowLeft className="w-3 h-3 mr-2" /> Back to Products
+        </Link>
+        <div className="bg-[#0a0a0a] border border-zinc-900 rounded-3xl p-8 md:p-12 shadow-2xl flex flex-col items-center justify-center">
+          <div className="bg-amber-500/10 p-5 rounded-full mb-6 border border-amber-500/30">
+            <Lock className="w-10 h-10 text-amber-500" />
+          </div>
+          <h2 className="text-xl md:text-2xl font-black text-amber-500 uppercase tracking-widest mb-3">Premium Customer Only</h2>
+          <p className="text-sm text-zinc-400 font-medium max-w-sm mb-6">
+            আমাদের ওয়েবসাইট থেকে যারা ৫০০০ টাকার জিনিস কিনবে শুধু তারাই এইখান থেকে কিনতে পারবে।
+          </p>
+          <div className="bg-[#111] border border-zinc-800 rounded-xl px-4 py-3">
+            <p className="text-xs font-bold text-zinc-300 uppercase tracking-widest">
+              Your Total Spent: <span className="text-green-400">{user?.totalSpent?.toFixed(0) || 0}৳</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl md:max-w-4xl mx-auto py-2 md:py-6 px-4 md:px-0">
@@ -129,11 +195,26 @@ export function ProductDetail() {
                       <span className={`text-sm md:text-base font-black ${selectedOption === opt ? 'text-green-400' : 'text-orange-400'}`}>
                         {opt.price.toFixed(0)}{settings?.currencySymbol || "৳"}
                       </span>
-                      {product.optionCodes?.[opt.name] !== undefined && (
-                        <span className={`text-[9px] font-bold uppercase tracking-tighter mt-0.5 ${product.optionCodes[opt.name].length > 0 ? 'text-zinc-500' : 'text-red-500'}`}>
-                          {product.optionCodes[opt.name].length > 0 ? `${product.optionCodes[opt.name].length} In Stock` : 'Out of Stock'}
-                        </span>
-                      )}
+                      {(() => {
+                        let stockDisplay = null;
+                        if (product.optionCodes?.[opt.name] !== undefined && product.optionCodes[opt.name].length > 0) {
+                          stockDisplay = `${product.optionCodes[opt.name].length} In Stock`;
+                        } else if (product.optionCodes?.[opt.name] !== undefined && product.optionCodes[opt.name].length === 0) {
+                          stockDisplay = 'Out of Stock';
+                        } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
+                          stockDisplay = opt.stockCount > 0 ? `${opt.stockCount} In Stock` : 'Out of Stock';
+                        } else {
+                          stockDisplay = 'Unlimited';
+                        }
+
+                        if (product.isSoldOut) stockDisplay = 'Sold Out';
+
+                        return (
+                          <span className={`text-[9px] font-bold uppercase tracking-tighter mt-0.5 ${stockDisplay === 'Out of Stock' || stockDisplay === 'Sold Out' ? 'text-red-500' : (stockDisplay === 'Unlimited' ? 'text-blue-500' : 'text-zinc-500')}`}>
+                            {stockDisplay}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </button>
                 ))}
@@ -144,17 +225,40 @@ export function ProductDetail() {
            <div className="bg-[#0a0a0a] rounded-2xl border border-zinc-900 p-5 flex justify-between items-center">
               <div className="flex flex-col">
                 <h2 className="text-sm font-bold text-white uppercase tracking-widest">Price</h2>
-                {product.codes !== undefined && (
-                  <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${product.codes.length > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {product.codes.length > 0 ? `${product.codes.length} In Stock` : 'Out of Stock'}
-                  </span>
-                )}
+                {(() => {
+                  let stockDisplay = null;
+                  if (product.codes !== undefined && product.codes.length > 0) {
+                    stockDisplay = `${product.codes.length} In Stock`;
+                  } else if (product.codes !== undefined && product.codes.length === 0) {
+                    stockDisplay = 'Out of Stock';
+                  } else if (product.stockCount !== undefined && product.stockCount !== null) {
+                    stockDisplay = product.stockCount > 0 ? `${product.stockCount} In Stock` : 'Out of Stock';
+                  }
+
+                  if (product.isSoldOut) stockDisplay = 'Sold Out';
+
+                  if (!stockDisplay) return null;
+
+                  return (
+                    <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${stockDisplay === 'Out of Stock' || stockDisplay === 'Sold Out' ? 'text-red-500' : 'text-green-500'}`}>
+                      {stockDisplay}
+                    </span>
+                  );
+                })()}
               </div>
               <div className="text-xl font-black text-orange-400">
                 {product.price.toFixed(0)}{settings?.currencySymbol || "৳"}
               </div>
            </div>
         ) : null}
+
+        {product.tutorialVideoUrl && (
+           <a href={product.tutorialVideoUrl} target="_blank" rel="noreferrer" className="block text-center mt-3 mb-6">
+              <span className="text-[10px] md:text-xs font-black text-pink-500 hover:text-pink-400 underline underline-offset-4 tracking-wider transition-colors">
+                এইখানে ক্লিক করে ইউনিপিন এর টিউটোরিয়াল দেখুন
+              </span>
+           </a>
+        )}
 
         {/* 2. Account Info (User Input) */}
         {product.requiredUserInputLabel && (
@@ -217,11 +321,22 @@ export function ProductDetail() {
               {((currentPrice !== undefined && currentPrice !== null) || (product.options && product.options.length > 0)) && (
                 <>
                   {!user ? (
-                    <Link to="/login" className="flex-1">
-                      <Button className="w-full text-sm py-6 bg-zinc-100 hover:bg-white text-black font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                        Sign In to Purchase
-                      </Button>
-                    </Link>
+                    <div className="flex gap-2 w-full">
+                      <Link to="/login?register=true" className="flex-1">
+                        <Button className="w-full text-[10px] md:text-sm py-6 bg-zinc-100 hover:bg-white text-black font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                          Create Account
+                        </Button>
+                      </Link>
+                      <Link to="/login" className="flex-1">
+                        <Button className="w-full text-[10px] md:text-sm py-6 bg-zinc-900 hover:bg-zinc-800 text-white font-black uppercase tracking-widest border border-zinc-800">
+                          Login
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : isActuallySoldOut ? (
+                    <Button disabled className="flex-1 text-sm py-6 bg-red-950 text-red-500 font-black uppercase tracking-widest border border-red-900/50 opacity-75 cursor-not-allowed">
+                      Sold Out
+                    </Button>
                   ) : (
                     <Button onClick={handlePurchase} className="flex-1 text-sm py-6 bg-green-600 hover:bg-green-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(34,197,94,0.2)]">
                       {currentPrice !== undefined && currentPrice !== null ? `Buy Now - ${currentPrice.toFixed(0)}${settings?.currencySymbol || "৳"}` : "Select a Package"}
@@ -233,6 +348,7 @@ export function ProductDetail() {
               {product.whatsappNumber && (
                 <Button 
                   variant="outline" 
+                  disabled={isActuallySoldOut}
                   onClick={() => {
                     if (product.options && product.options.length > 0 && !selectedOption) {
                       setPurchaseError("Please select a package/option before instant buy.");

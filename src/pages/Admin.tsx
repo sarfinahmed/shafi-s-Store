@@ -14,7 +14,8 @@ export function Admin() {
     totalUsers: 0,
     totalProducts: 0,
     totalOrders: 0,
-    revenue: 0
+    revenue: 0,
+    pageViews: 0
   });
   const [chartData, setChartData] = useState<any[]>([]);
   
@@ -32,18 +33,22 @@ export function Admin() {
   const [newEstimatedTime, setNewEstimatedTime] = useState("");
   const [newSortOrder, setNewSortOrder] = useState("");
   const [newIsManualFulfillment, setNewIsManualFulfillment] = useState(false);
-  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string}[]>([]);
+  const [newIsSoldOut, setNewIsSoldOut] = useState(false);
+  const [newIsPremiumOnly, setNewIsPremiumOnly] = useState(false);
+  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string; stockCount?: string}[]>([]);
   const [newCodes, setNewCodes] = useState("");
+  const [newStockCount, setNewStockCount] = useState("");
   const [newRedeemLink, setNewRedeemLink] = useState("");
   const [newTutorialVideoUrl, setNewTutorialVideoUrl] = useState("");
 
   const [notification, setNotification] = useState("");
 
   const loadData = async () => {
-    const [p, users, orders] = await Promise.all([
+    const [p, users, orders, pageViews] = await Promise.all([
       db.getProducts(),
       db.getAllUsers(),
-      db.getOrders()
+      db.getOrders(),
+      db.getTodayPageViews()
     ]);
     setProducts(p);
     
@@ -52,7 +57,8 @@ export function Admin() {
       totalUsers: users.length,
       totalProducts: p.length,
       totalOrders: orders.length,
-      revenue: rev
+      revenue: rev,
+      pageViews: pageViews
     });
 
     // Process chart data (last 7 days)
@@ -93,14 +99,15 @@ export function Admin() {
   const handleSaveProduct = async () => {
     if (!newTitle) return;
     
-    let parsedOptions: { name: string; price: number }[] | undefined = undefined;
+    let parsedOptions: { name: string; price: number; stockCount?: number | null }[] | undefined = undefined;
     let optionCodes: Record<string, string[]> = {};
     
     const validOptions = newOptionsArr.filter(opt => opt.name.trim() !== "");
     if (validOptions.length > 0) {
       parsedOptions = validOptions.map(opt => ({
         name: opt.name.trim(),
-        price: parseFloat(opt.price) || 0
+        price: parseFloat(opt.price) || 0,
+        stockCount: opt.stockCount && opt.stockCount.trim() !== "" ? parseInt(opt.stockCount, 10) : null
       }));
       
       validOptions.forEach(opt => {
@@ -122,9 +129,12 @@ export function Admin() {
         whatsappNumber: newWhatsappNumber,
         estimatedTime: newEstimatedTime,
         isManualFulfillment: newIsManualFulfillment,
+        isSoldOut: newIsSoldOut,
+        isPremiumOnly: newIsPremiumOnly,
         sortOrder: newSortOrder.trim() !== "" ? parseInt(newSortOrder, 10) : null,
         codes: newCodes.split('\n').map(c => c.trim()).filter(c => c),
         optionCodes: optionCodes,
+        stockCount: newStockCount.trim() !== "" ? parseInt(newStockCount, 10) : null,
         redeemLink: newRedeemLink,
         tutorialVideoUrl: newTutorialVideoUrl,
       };
@@ -164,8 +174,11 @@ export function Admin() {
     setNewEstimatedTime("");
     setNewSortOrder("");
     setNewIsManualFulfillment(false);
+    setNewIsSoldOut(false);
+    setNewIsPremiumOnly(false);
     setNewOptionsArr([]);
     setNewCodes("");
+    setNewStockCount("");
     setNewRedeemLink("");
     setNewTutorialVideoUrl("");
     loadData();
@@ -184,12 +197,16 @@ export function Admin() {
     setNewEstimatedTime(product.estimatedTime || "");
     setNewSortOrder(product.sortOrder !== undefined && product.sortOrder !== null ? product.sortOrder.toString() : "");
     setNewIsManualFulfillment(product.isManualFulfillment || false);
+    setNewIsSoldOut(product.isSoldOut || false);
+    setNewIsPremiumOnly(product.isPremiumOnly || false);
     setNewOptionsArr(product.options ? product.options.map(o => ({ 
       name: o.name, 
       price: o.price.toString(),
+      stockCount: o.stockCount !== null && o.stockCount !== undefined ? o.stockCount.toString() : "",
       codes: (product.optionCodes?.[o.name] || []).join('\n')
     })) : []);
     setNewCodes((product.codes || []).join('\n'));
+    setNewStockCount(product.stockCount !== null && product.stockCount !== undefined ? product.stockCount.toString() : "");
     setNewRedeemLink(product.redeemLink || "");
     setNewTutorialVideoUrl(product.tutorialVideoUrl || "");
     setShowAddProduct(true);
@@ -245,7 +262,7 @@ export function Admin() {
 
   return (
     <div className="space-y-6 md:space-y-8 p-4 md:p-12 max-w-5xl">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -281,6 +298,15 @@ export function Admin() {
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Revenue</span>
           </div>
           <div className="text-2xl font-black text-white">{settings?.currencySymbol || "৳"}{stats.revenue.toLocaleString()}</div>
+        </div>
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-pink-500/10 rounded-lg">
+              <Eye className="w-4 h-4 text-pink-500" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Today's Views</span>
+          </div>
+          <div className="text-2xl font-black text-white">{stats.pageViews}</div>
         </div>
       </div>
 
@@ -390,6 +416,7 @@ export function Admin() {
               <Input placeholder="Input Label (e.g. Player ID)" value={newRequiredUserInputLabel} onChange={e => setNewRequiredUserInputLabel(e.target.value)} />
               <Input placeholder="Estimated Wait Time (e.g. 5-10 Minutes)" value={newEstimatedTime} onChange={e => setNewEstimatedTime(e.target.value)} />
               <Input type="number" placeholder="Order Priority (1 = top, empty = bottom)" value={newSortOrder} onChange={e => setNewSortOrder(e.target.value)} />
+              <Input type="number" placeholder="Stock Count (Empty = Unlimited)" value={newStockCount} onChange={e => setNewStockCount(e.target.value)} />
               <Input placeholder="Delivery Link (given after purchase)" value={newDeliveryLink} onChange={e => setNewDeliveryLink(e.target.value)} />
               <Input placeholder="Specific WhatsApp (e.g. 88017XX)" value={newWhatsappNumber} onChange={e => setNewWhatsappNumber(e.target.value)} />
               <Textarea placeholder="Description" className="md:col-span-2 whitespace-pre-wrap" value={newDesc} onChange={e => setNewDesc(e.target.value)} />
@@ -397,7 +424,7 @@ export function Admin() {
               <div className="md:col-span-2 space-y-3 bg-[#111] p-4 rounded-2xl border border-zinc-800">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Packages / Options</label>
-                  <Button variant="outline" size="sm" onClick={() => setNewOptionsArr([...newOptionsArr, {name: '', price: ''}])}>
+                  <Button variant="outline" size="sm" onClick={() => setNewOptionsArr([...newOptionsArr, {name: '', price: '', codes: ''}])}>
                     <Plus className="w-4 h-4 mr-1" /> Add Package
                   </Button>
                 </div>
@@ -423,6 +450,16 @@ export function Admin() {
                         onChange={e => {
                           const updated = [...newOptionsArr];
                           updated[idx].price = e.target.value;
+                          setNewOptionsArr(updated);
+                        }} 
+                      />
+                      <Input 
+                        type="number" 
+                        placeholder="Stock (Empty = Unlimited)" 
+                        value={opt.stockCount || ""} 
+                        onChange={e => {
+                          const updated = [...newOptionsArr];
+                          updated[idx].stockCount = e.target.value;
                           setNewOptionsArr(updated);
                         }} 
                       />
@@ -490,6 +527,26 @@ export function Admin() {
                   className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600"
                 />
                 <span>Manual Fulfillment (Admin completes the order manually, no instant delivery)</span>
+              </label>
+              
+              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-400">
+                <input 
+                  type="checkbox" 
+                  checked={newIsSoldOut} 
+                  onChange={e => setNewIsSoldOut(e.target.checked)}
+                  className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600 text-red-500 focus:ring-red-500"
+                />
+                <span className="text-red-400 font-bold">Mark as Sold Out</span>
+              </label>
+
+              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-400">
+                <input 
+                  type="checkbox" 
+                  checked={newIsPremiumOnly} 
+                  onChange={e => setNewIsPremiumOnly(e.target.checked)}
+                  className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600 text-amber-500 focus:ring-amber-500"
+                />
+                <span className="text-amber-400 font-bold">Premium Customer Only (Requires 5000 ৳ spent)</span>
               </label>
             </div>
             <div className="flex justify-end gap-2 pt-2">

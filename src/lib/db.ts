@@ -10,6 +10,7 @@ export interface User {
   isAdmin: boolean;
   isBanned?: boolean;
   balance?: number;
+  totalSpent?: number;
   purchasedProducts?: string[];
 }
 
@@ -52,14 +53,17 @@ export interface Product {
   deliveryLink?: string;
   whatsappNumber?: string;
   isManualFulfillment?: boolean;
-  options?: { name: string; price: number }[];
+  options?: { name: string; price: number; stockCount?: number | null }[];
   estimatedTime?: string;
   isActive?: boolean;
   sortOrder?: number;
   codes?: string[]; // Generic codes
   optionCodes?: Record<string, string[]>; // Codes mapped to option names (e.g., {"Weekly": ["CODE1"], "Monthly": ["CODE2"]})
+  stockCount?: number | null;
   redeemLink?: string;
   tutorialVideoUrl?: string;
+  isSoldOut?: boolean;
+  isPremiumOnly?: boolean;
   createdAt: number;
 }
 
@@ -237,17 +241,36 @@ class FirebaseDatabase {
         const remainingCodes = dbProduct.codes.slice(1);
         await updateDoc(productRef, { codes: remainingCodes });
       } 
-      // If they configured it as a code product but ran out of codes for this specific variant or generic pool
-      else if (
-        (selectedOptionName && dbProduct.optionCodes?.[selectedOptionName] !== undefined) || 
-        dbProduct.codes !== undefined
-      ) {
-         throw new Error("Product out of stock (No codes left for this option)");
+      // Handle stockCount decrement for options
+      else if (selectedOptionName && dbProduct.options) {
+        const optionIndex = dbProduct.options.findIndex(o => o.name === selectedOptionName);
+        if (optionIndex !== -1 && dbProduct.options[optionIndex].stockCount !== undefined && dbProduct.options[optionIndex].stockCount !== null) {
+          const currentStock = dbProduct.options[optionIndex].stockCount;
+          if (currentStock! <= 0) {
+             throw new Error("Product out of stock");
+          }
+          const updatedOptions = [...dbProduct.options];
+          updatedOptions[optionIndex].stockCount = currentStock! - 1;
+          await updateDoc(productRef, { options: updatedOptions });
+        } else if (dbProduct.optionCodes?.[selectedOptionName] !== undefined) {
+           throw new Error("Product out of stock (No codes left for this option)");
+        }
+      }
+      // Handle stockCount decrement for simple products
+      else if (dbProduct.stockCount !== undefined && dbProduct.stockCount !== null) {
+        if (dbProduct.stockCount <= 0) {
+           throw new Error("Product out of stock");
+        }
+        await updateDoc(productRef, { stockCount: dbProduct.stockCount - 1 });
+      }
+      else if (dbProduct.codes !== undefined) {
+         throw new Error("Product out of stock (No codes left)");
       }
     }
 
     await updateDoc(userRef, {
       balance: balance - product.price,
+      totalSpent: (u.totalSpent || 0) + product.price,
       purchasedProducts: [...(u.purchasedProducts || []), product.id]
     });
 
@@ -466,6 +489,38 @@ class FirebaseDatabase {
 
   async removeProduct(id: string): Promise<void> {
     await deleteDoc(doc(dbInit, "products", id));
+  }
+
+  async recordPageView(): Promise<void> {
+    try {
+      // Create a date string in the local timezone (YYYY-MM-DD format)
+      const date = new Date().toLocaleDateString('en-CA'); // e.g. 2026-06-29
+      const ref = doc(dbInit, "stats", `page_views_${date}`);
+      const snap = await getDoc(ref);
+      
+      if (!snap.exists()) {
+        await setDoc(ref, { date, count: 1, lastUpdated: Date.now() });
+      } else {
+        await updateDoc(ref, { 
+          count: (snap.data().count || 0) + 1,
+          lastUpdated: Date.now()
+        });
+      }
+    } catch (e) {
+      console.error("Failed to record page view", e);
+    }
+  }
+
+  async getTodayPageViews(): Promise<number> {
+    try {
+      const date = new Date().toLocaleDateString('en-CA');
+      const ref = doc(dbInit, "stats", `page_views_${date}`);
+      const snap = await getDoc(ref);
+      return snap.exists() ? (snap.data().count || 0) : 0;
+    } catch (e) {
+      console.error("Failed to get page views", e);
+      return 0;
+    }
   }
 }
 

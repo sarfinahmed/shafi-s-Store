@@ -50,8 +50,8 @@ export function Layout() {
                 </Button>
               </>
             ) : (
-              <Link to="/login">
-                <Button className="bg-white text-black hover:bg-zinc-200 px-3 py-1.5 md:px-4 md:py-2 text-sm">Sign In</Button>
+              <Link to="/login?register=true">
+                <Button className="bg-white text-black hover:bg-zinc-200 px-3 py-1.5 md:px-4 md:py-2 text-sm">Create Account</Button>
               </Link>
             )}
           </nav>
