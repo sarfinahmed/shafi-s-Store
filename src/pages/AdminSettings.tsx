@@ -67,8 +67,8 @@ export function AdminSettings() {
     <div className="space-y-6 md:space-y-8 p-4 md:p-12 max-w-3xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter text-white">Settings</h1>
-          <p className="text-zinc-500 mt-1 font-medium">Configure global app settings.</p>
+          <h1 className="text-3xl font-black tracking-tighter text-black dark:text-white">Settings</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 mt-1 font-medium">Configure global app settings.</p>
         </div>
         {notification && (
           <div className="flex items-center text-green-400 bg-green-950/30 border border-green-900/50 px-4 py-2 rounded-xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
@@ -78,10 +78,10 @@ export function AdminSettings() {
         )}
       </div>
 
-      <div className="bg-[#0a0a0a] rounded-3xl border border-zinc-900 p-8 shadow-sm space-y-6">
+      <div className="bg-zinc-50 dark:bg-[#0a0a0a] rounded-3xl border border-zinc-200 dark:border-zinc-900 p-8 shadow-sm space-y-6">
         <div className="space-y-6">
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">App Name</label>
+            <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-2">App Name</label>
             <Input 
               value={appName} 
               onChange={e => setAppName(e.target.value)} 
@@ -91,7 +91,7 @@ export function AdminSettings() {
           </div>
           
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Hero Title</label>
+            <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-2">Hero Title</label>
             <Input 
               value={heroTitle} 
               onChange={e => setHeroTitle(e.target.value)} 
@@ -101,7 +101,7 @@ export function AdminSettings() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Hero Subtitle</label>
+            <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-2">Hero Subtitle</label>
             <Textarea 
               value={heroSubtitle} 
               onChange={e => setHeroSubtitle(e.target.value)} 
@@ -112,7 +112,7 @@ export function AdminSettings() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Currency Symbol</label>
+            <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-2">Currency Symbol</label>
             <Input 
               value={currencySymbol} 
               onChange={e => setCurrencySymbol(e.target.value)} 
@@ -122,7 +122,7 @@ export function AdminSettings() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Admin WhatsApp Number</label>
+            <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-2">Admin WhatsApp Number</label>
             <Input 
               value={adminWhatsappNumber} 
               onChange={e => setAdminWhatsappNumber(e.target.value)} 
@@ -132,11 +132,11 @@ export function AdminSettings() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Telegram API Chat ID(s) (Automatic Notifications)</label>
+            <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-2">Telegram API Chat ID(s) (Automatic Notifications)</label>
             <div className="space-y-2 mb-2">
               {telegramChatIds.map((id, index) => (
-                <div key={index} className="flex items-center justify-between bg-black border border-zinc-900 rounded-md px-3 py-2">
-                  <span className="text-sm text-zinc-300">{id}</span>
+                <div key={index} className="flex items-center justify-between bg-white dark:bg-black border border-zinc-200 dark:border-zinc-900 rounded-md px-3 py-2">
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{id}</span>
                   <button 
                     onClick={() => setTelegramChatIds(telegramChatIds.filter((_, i) => i !== index))}
                     className="text-red-500 hover:text-red-400 p-1"
@@ -151,7 +151,7 @@ export function AdminSettings() {
                 value={newChatId} 
                 onChange={e => setNewChatId(e.target.value)} 
                 placeholder="e.g. 6891891678"
-                className="bg-black border-zinc-900"
+                className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-900"
               />
               <Button 
                 onClick={() => {
@@ -169,7 +169,7 @@ export function AdminSettings() {
           </div>
           
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Notice Banner Text (Leaves empty to hide)</label>
+            <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-2">Notice Banner Text (Leaves empty to hide)</label>
             <Textarea 
               value={noticeBanner} 
               onChange={e => setNoticeBanner(e.target.value)} 
@@ -178,22 +178,22 @@ export function AdminSettings() {
             />
           </div>
 
-          <label className="flex items-center space-x-3 bg-[#111] p-4 rounded-xl border border-zinc-800 cursor-pointer">
+          <label className="flex items-center space-x-3 bg-zinc-100 dark:bg-[#111] p-4 rounded-xl border border-zinc-300 dark:border-zinc-800 cursor-pointer">
             <input 
               type="checkbox" 
               checked={maintenanceMode} 
               onChange={e => setMaintenanceMode(e.target.checked)}
-              className="w-5 h-5 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600"
+              className="w-5 h-5 bg-zinc-100 dark:bg-[#111] border-zinc-300 dark:border-zinc-800 rounded focus:ring-zinc-600"
             />
             <div>
-              <span className="block text-sm font-bold text-white">Maintenance Mode</span>
-              <span className="block text-xs text-zinc-400">Show a popup to tell users you are working on the app right now.</span>
+              <span className="block text-sm font-bold text-black dark:text-white">Maintenance Mode</span>
+              <span className="block text-xs text-zinc-600 dark:text-zinc-400">Show a popup to tell users you are working on the app right now.</span>
             </div>
           </label>
           
-          <div className="pt-6 border-t border-zinc-900">
+          <div className="pt-6 border-t border-zinc-200 dark:border-zinc-900">
             <div className="flex items-center justify-between mb-4">
-              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest">Payment Methods</label>
+              <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">Payment Methods</label>
               <Button size="sm" variant="outline" onClick={() => setPaymentMethods([...paymentMethods, { id: Date.now().toString(), name: '', details: '' }])}>
                 <Plus className="w-4 h-4 mr-2" /> Add Method
               </Button>
@@ -235,83 +235,83 @@ export function AdminSettings() {
           </div>
         </div>
 
-        <div className="pt-6 border-t border-zinc-900">
-          <h2 className="text-lg font-black text-white mb-4">Auto Topup API Configuration</h2>
-          <p className="text-xs text-zinc-500 mb-6 font-medium">Configure credentials for external Topup APIs. These can be used in product configurations.</p>
+        <div className="pt-6 border-t border-zinc-200 dark:border-zinc-900">
+          <h2 className="text-lg font-black text-black dark:text-white mb-4">Auto Topup API Configuration</h2>
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-6 font-medium">Configure credentials for external Topup APIs. These can be used in product configurations.</p>
           
           <div className="space-y-6">
-            <div className="bg-[#111] p-5 rounded-2xl border border-zinc-800 space-y-4">
-              <h3 className="font-bold text-zinc-300 flex items-center gap-2">Free Fire API</h3>
+            <div className="bg-zinc-100 dark:bg-[#111] p-5 rounded-2xl border border-zinc-300 dark:border-zinc-800 space-y-4">
+              <h3 className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">Free Fire API</h3>
               <div>
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API URL</label>
+                <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5">API URL</label>
                 <Input 
                   value={freeFireApiUrl} 
                   onChange={e => setFreeFireApiUrl(e.target.value)} 
                   placeholder="e.g. https://api.example.com/ff"
-                  className="bg-black border-zinc-900"
+                  className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-900"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API Key</label>
+                <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5">API Key</label>
                 <Input 
                   value={freeFireApiKey} 
                   onChange={e => setFreeFireApiKey(e.target.value)} 
                   placeholder="Enter API Key"
                   type="password"
-                  className="bg-black border-zinc-900"
+                  className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-900"
                 />
               </div>
             </div>
 
-            <div className="bg-[#111] p-5 rounded-2xl border border-zinc-800 space-y-4">
-              <h3 className="font-bold text-zinc-300 flex items-center gap-2">Garena Shell API</h3>
+            <div className="bg-zinc-100 dark:bg-[#111] p-5 rounded-2xl border border-zinc-300 dark:border-zinc-800 space-y-4">
+              <h3 className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">Garena Shell API</h3>
               <div>
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API URL</label>
+                <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5">API URL</label>
                 <Input 
                   value={garenaShellApiUrl} 
                   onChange={e => setGarenaShellApiUrl(e.target.value)} 
                   placeholder="e.g. https://api.example.com/garena"
-                  className="bg-black border-zinc-900"
+                  className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-900"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API Key</label>
+                <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5">API Key</label>
                 <Input 
                   value={garenaShellApiKey} 
                   onChange={e => setGarenaShellApiKey(e.target.value)} 
                   placeholder="Enter API Key"
                   type="password"
-                  className="bg-black border-zinc-900"
+                  className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-900"
                 />
               </div>
             </div>
 
-            <div className="bg-[#111] p-5 rounded-2xl border border-zinc-800 space-y-4">
-              <h3 className="font-bold text-zinc-300 flex items-center gap-2">Unipin API</h3>
+            <div className="bg-zinc-100 dark:bg-[#111] p-5 rounded-2xl border border-zinc-300 dark:border-zinc-800 space-y-4">
+              <h3 className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">Unipin API</h3>
               <div>
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API URL</label>
+                <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5">API URL</label>
                 <Input 
                   value={unipinApiUrl} 
                   onChange={e => setUnipinApiUrl(e.target.value)} 
                   placeholder="e.g. https://api.example.com/unipin"
-                  className="bg-black border-zinc-900"
+                  className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-900"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">API Key</label>
+                <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5">API Key</label>
                 <Input 
                   value={unipinApiKey} 
                   onChange={e => setUnipinApiKey(e.target.value)} 
                   placeholder="Enter API Key"
                   type="password"
-                  className="bg-black border-zinc-900"
+                  className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-900"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="pt-6 border-t border-zinc-900 flex justify-end">
+        <div className="pt-6 border-t border-zinc-200 dark:border-zinc-900 flex justify-end">
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Saving..." : "Save Settings"}
           </Button>

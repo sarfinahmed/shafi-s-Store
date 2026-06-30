@@ -81,18 +81,18 @@ export function AdminUsers() {
     <div className="space-y-6 md:space-y-8 p-4 md:p-12 max-w-5xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter text-white">Users</h1>
-          <p className="text-zinc-500 mt-1 font-medium">Manage platform accounts.</p>
+          <h1 className="text-3xl font-black tracking-tighter text-black dark:text-white">Users</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 mt-1 font-medium">Manage platform accounts.</p>
         </div>
         
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
           <div className="relative w-full md:w-64">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 dark:text-zinc-400 w-4 h-4" />
             <Input 
               placeholder="Search users..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-[#111] border-zinc-800"
+              className="pl-9 bg-zinc-100 dark:bg-[#111] border-zinc-300 dark:border-zinc-800"
             />
           </div>
           {notification && (
@@ -105,11 +105,11 @@ export function AdminUsers() {
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-xl font-bold text-white">Total ({filteredUsers.length} of {users.length})</h2>
-        <div className="bg-[#0a0a0a] rounded-3xl border border-zinc-900 overflow-hidden shadow-sm">
+        <h2 className="text-xl font-bold text-black dark:text-white">Total ({filteredUsers.length} of {users.length})</h2>
+        <div className="bg-zinc-50 dark:bg-[#0a0a0a] rounded-3xl border border-zinc-200 dark:border-zinc-900 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="text-[10px] uppercase bg-[#111] text-zinc-500 font-black tracking-widest border-b border-zinc-900">
+              <thead className="text-[10px] uppercase bg-zinc-100 dark:bg-[#111] text-zinc-600 dark:text-zinc-400 font-black tracking-widest border-b border-zinc-200 dark:border-zinc-900">
                 <tr>
                   <th className="px-6 py-4">User</th>
                   <th className="px-6 py-4">Email</th>
@@ -119,24 +119,24 @@ export function AdminUsers() {
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-900 text-zinc-300">
+              <tbody className="divide-y divide-zinc-900 text-zinc-700 dark:text-zinc-300">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-zinc-500 font-medium">No users found.</td>
+                    <td colSpan={7} className="px-6 py-12 text-center text-zinc-600 dark:text-zinc-400 font-medium">No users found.</td>
                   </tr>
                 ) : filteredUsers.map((u) => (
                   <React.Fragment key={u.id}>
-                  <tr className="hover:bg-zinc-900/50 transition-colors">
+                  <tr className="hover:bg-zinc-200 dark:bg-zinc-900/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-[#111] overflow-hidden flex-shrink-0 flex items-center justify-center font-black text-white border border-zinc-800">
+                        <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-[#111] overflow-hidden flex-shrink-0 flex items-center justify-center font-black text-black dark:text-white border border-zinc-300 dark:border-zinc-800">
                           {u.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="font-bold text-white truncate max-w-[150px]">{u.name}</div>
+                        <div className="font-bold text-black dark:text-white truncate max-w-[150px]">{u.name}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-medium text-zinc-500">{u.email}</td>
-                    <td className="px-6 py-4 font-bold text-white">৳{(u.balance || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-medium text-zinc-600 dark:text-zinc-400">{u.email}</td>
+                    <td className="px-6 py-4 font-bold text-black dark:text-white">৳{(u.balance || 0).toFixed(2)}</td>
                     <td className="px-6 py-4 font-bold text-amber-500">৳{(u.totalSpent || 0).toFixed(2)}</td>
                     <td className="px-6 py-4">
                       {u.isAdmin ? (
@@ -145,7 +145,7 @@ export function AdminUsers() {
                         </span>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#111] text-zinc-500 border border-zinc-800">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-zinc-100 dark:bg-[#111] text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-800">
                             User
                           </span>
                           {u.isBanned && (
@@ -162,7 +162,7 @@ export function AdminUsers() {
                              variant="ghost" 
                              size="sm" 
                              onClick={() => setAdjustUserId(adjustUserId === u.id ? null : u.id)} 
-                             className="text-zinc-500 hover:text-white hover:bg-zinc-800 w-10 h-10 p-0 rounded-xl"
+                             className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-800 w-10 h-10 p-0 rounded-xl"
                              title="Adjust Balance"
                            >
                              {adjustUserId === u.id ? <Minus className="w-5 h-5 mx-auto" /> : <Plus className="w-5 h-5 mx-auto" />}
@@ -198,31 +198,31 @@ export function AdminUsers() {
                     </td>
                   </tr>
                   {adjustUserId === u.id && (
-                  <tr key={`${u.id}-adjust`} className="bg-[#111] animate-in fade-in slide-in-from-top-1">
+                  <tr key={`${u.id}-adjust`} className="bg-zinc-100 dark:bg-[#111] animate-in fade-in slide-in-from-top-1">
                     <td colSpan={7} className="px-6 py-4">
                       <div className="flex flex-col md:flex-row items-end gap-3 max-w-2xl ml-auto">
                         <div className="flex-1 w-full space-y-1">
-                          <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest pl-1">Amount</label>
+                          <label className="text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-400 tracking-widest pl-1">Amount</label>
                           <Input 
                             type="number" 
                             placeholder="e.g. 500" 
-                            className="bg-black border-zinc-900"
+                            className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-900"
                             value={balanceAmount}
                             onChange={e => setBalanceAmount(e.target.value)}
                           />
                         </div>
                         <div className="flex-1 w-full space-y-1">
-                          <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest pl-1">Reason</label>
+                          <label className="text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-400 tracking-widest pl-1">Reason</label>
                           <Input 
                             placeholder="e.g. Deposit or Penalty" 
-                            className="bg-black border-zinc-900"
+                            className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-900"
                             value={balanceReason}
                             onChange={e => setBalanceReason(e.target.value)}
                           />
                         </div>
                         <div className="flex gap-2 w-full md:w-auto">
-                          <Button onClick={() => handleAdjustBalance(u, 'add')} size="sm" className="bg-green-600 hover:bg-green-700 text-white">Add (+)</Button>
-                          <Button onClick={() => handleAdjustBalance(u, 'deduct')} size="sm" className="bg-red-600 hover:bg-red-700 text-white">Deduct (-)</Button>
+                          <Button onClick={() => handleAdjustBalance(u, 'add')} size="sm" className="bg-green-600 hover:bg-green-700 text-black dark:text-white">Add (+)</Button>
+                          <Button onClick={() => handleAdjustBalance(u, 'deduct')} size="sm" className="bg-red-600 hover:bg-red-700 text-black dark:text-white">Deduct (-)</Button>
                           <Button variant="ghost" size="sm" onClick={() => setAdjustUserId(null)}>Cancel</Button>
                         </div>
                       </div>
