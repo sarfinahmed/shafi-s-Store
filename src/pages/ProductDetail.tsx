@@ -42,9 +42,6 @@ export function ProductDetail() {
     if (product.isSoldOut) return true;
     
     if (selectedOption) {
-      if (product.optionCodes?.[selectedOption.name] !== undefined) {
-        return product.optionCodes[selectedOption.name].length === 0;
-      }
       if (selectedOption.stockCount !== undefined && selectedOption.stockCount !== null) {
         return selectedOption.stockCount <= 0;
       }
@@ -55,9 +52,7 @@ export function ProductDetail() {
         let allSoldOut = true;
         for (const opt of product.options) {
           let optSoldOut = false;
-          if (product.optionCodes?.[opt.name] !== undefined) {
-            optSoldOut = product.optionCodes[opt.name].length === 0;
-          } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
+          if (opt.stockCount !== undefined && opt.stockCount !== null) {
             optSoldOut = opt.stockCount <= 0;
           }
           if (!optSoldOut) {
@@ -67,9 +62,6 @@ export function ProductDetail() {
         }
         return allSoldOut;
       } else {
-        if (product.codes !== undefined) {
-          return product.codes.length === 0;
-        }
         if (product.stockCount !== undefined && product.stockCount !== null) {
           return product.stockCount <= 0;
         }
@@ -199,8 +191,6 @@ export function ProductDetail() {
                         let stockDisplay = null;
                         if (product.optionCodes?.[opt.name] !== undefined && product.optionCodes[opt.name].length > 0) {
                           stockDisplay = `${product.optionCodes[opt.name].length} In Stock`;
-                        } else if (product.optionCodes?.[opt.name] !== undefined && product.optionCodes[opt.name].length === 0) {
-                          stockDisplay = 'Out of Stock';
                         } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
                           stockDisplay = opt.stockCount > 0 ? `${opt.stockCount} In Stock` : 'Out of Stock';
                         } else {
@@ -229,8 +219,6 @@ export function ProductDetail() {
                   let stockDisplay = null;
                   if (product.codes !== undefined && product.codes.length > 0) {
                     stockDisplay = `${product.codes.length} In Stock`;
-                  } else if (product.codes !== undefined && product.codes.length === 0) {
-                    stockDisplay = 'Out of Stock';
                   } else if (product.stockCount !== undefined && product.stockCount !== null) {
                     stockDisplay = product.stockCount > 0 ? `${product.stockCount} In Stock` : 'Out of Stock';
                   }

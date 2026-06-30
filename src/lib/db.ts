@@ -491,10 +491,16 @@ class FirebaseDatabase {
     await deleteDoc(doc(dbInit, "products", id));
   }
 
+  getTodayDateString() {
+    const d = new Date();
+    const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+    const bdTime = new Date(utc + (3600000 * 6));
+    return bdTime.toISOString().split('T')[0];
+  }
+
   async recordPageView(): Promise<void> {
     try {
-      // Create a date string in the local timezone (YYYY-MM-DD format)
-      const date = new Date().toLocaleDateString('en-CA'); // e.g. 2026-06-29
+      const date = this.getTodayDateString();
       const ref = doc(dbInit, "stats", `page_views_${date}`);
       const snap = await getDoc(ref);
       
@@ -513,7 +519,7 @@ class FirebaseDatabase {
 
   async getTodayPageViews(): Promise<number> {
     try {
-      const date = new Date().toLocaleDateString('en-CA');
+      const date = this.getTodayDateString();
       const ref = doc(dbInit, "stats", `page_views_${date}`);
       const snap = await getDoc(ref);
       return snap.exists() ? (snap.data().count || 0) : 0;

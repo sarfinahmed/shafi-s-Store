@@ -93,22 +93,22 @@ export function Home() {
 
                 if (product.options && product.options.length > 0) {
                   product.options.forEach(opt => {
-                    if (product.optionCodes?.[opt.name] !== undefined) {
-                      stock += product.optionCodes[opt.name].length;
-                      hasStockControl = true;
-                    } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
+                    if (opt.stockCount !== undefined && opt.stockCount !== null) {
                       stock += Math.max(0, opt.stockCount);
+                      hasStockControl = true;
+                    } else if (product.optionCodes?.[opt.name] !== undefined && product.optionCodes[opt.name].length > 0) {
+                      stock += product.optionCodes[opt.name].length;
                       hasStockControl = true;
                     } else {
                       unlimited = true;
                     }
                   });
                 } else {
-                  if (product.codes !== undefined) {
-                    stock = product.codes.length;
-                    hasStockControl = true;
-                  } else if (product.stockCount !== undefined && product.stockCount !== null) {
+                  if (product.stockCount !== undefined && product.stockCount !== null) {
                     stock = Math.max(0, product.stockCount);
+                    hasStockControl = true;
+                  } else if (product.codes !== undefined && product.codes.length > 0) {
+                    stock = product.codes.length;
                     hasStockControl = true;
                   } else {
                     unlimited = true;
