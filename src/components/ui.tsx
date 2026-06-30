@@ -13,9 +13,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           "inline-flex items-center justify-center px-4 py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:pointer-events-none",
           variant === "default" && "bg-white text-black rounded-lg font-bold hover:bg-zinc-200 focus:ring-white",
-          variant === "outline" && "border border-zinc-300 dark:border-zinc-800 bg-transparent text-zinc-700 dark:text-zinc-300 rounded-lg font-bold hover:border-zinc-400 dark:border-zinc-700 hover:text-black dark:text-white hover:bg-zinc-200 dark:bg-zinc-900 focus:ring-zinc-700",
-          variant === "danger" && "bg-red-500 text-black dark:text-white rounded-lg font-bold hover:bg-red-600 focus:ring-red-500",
-          variant === "ghost" && "hover:bg-zinc-200 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:text-black dark:text-white rounded-lg font-semibold",
+          variant === "outline" && "border border-zinc-800 bg-transparent text-zinc-300 rounded-lg font-bold hover:border-zinc-700 hover:text-white hover:bg-zinc-900 focus:ring-zinc-700",
+          variant === "danger" && "bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 focus:ring-red-500",
+          variant === "ghost" && "hover:bg-zinc-900 text-zinc-300 hover:text-white rounded-lg font-semibold",
           className
         )}
         {...props}
@@ -31,7 +31,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
       <input
         ref={ref}
         className={cn(
-          "flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 px-3 py-2 text-sm text-black dark:text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}
@@ -47,7 +47,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
       <textarea
         ref={ref}
         className={cn(
-          "flex min-h-[80px] w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 px-3 py-2 text-sm text-black dark:text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed disabled:opacity-50",
+          "flex min-h-[80px] w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}

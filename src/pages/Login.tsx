@@ -46,19 +46,19 @@ export function Login() {
   };
 
   return (
-    <div className="max-w-sm md:max-w-md mx-auto mt-8 md:mt-20 p-5 md:p-10 bg-zinc-50 dark:bg-[#0a0a0a] rounded-2xl md:rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-900 mx-4">
+    <div className="max-w-sm md:max-w-md mx-auto mt-8 md:mt-20 p-5 md:p-10 bg-[#0a0a0a] rounded-2xl md:rounded-3xl shadow-2xl border border-zinc-900 mx-4">
       <div className="text-center mb-5 md:mb-8">
-        <h1 className="text-xl md:text-3xl font-black tracking-tighter text-black dark:text-white">
+        <h1 className="text-xl md:text-3xl font-black tracking-tighter text-white">
           {isRegister ? "Create Account" : "Welcome Back"}
         </h1>
-        <p className="text-[10px] md:text-sm text-zinc-600 dark:text-zinc-400 font-medium mt-1 md:mt-2">
+        <p className="text-[10px] md:text-sm text-zinc-500 font-medium mt-1 md:mt-2">
           {isRegister ? "Join us to access premium products." : "Sign in to your premium dashboard."}
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
         {isRegister && (
           <div>
-            <label className="block text-[10px] md:text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1 md:mb-2">Full Name</label>
+            <label className="block text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1 md:mb-2">Full Name</label>
             <Input 
               type="text" 
               placeholder="e.g. Alex Rivera" 
@@ -70,7 +70,7 @@ export function Login() {
           </div>
         )}
         <div>
-          <label className="block text-[10px] md:text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1 md:mb-2">Email Address</label>
+          <label className="block text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1 md:mb-2">Email Address</label>
           <Input 
             type="email" 
             placeholder="name@example.com" 
@@ -81,7 +81,7 @@ export function Login() {
           />
         </div>
         <div>
-          <label className="block text-[10px] md:text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1 md:mb-2">Password</label>
+          <label className="block text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1 md:mb-2">Password</label>
           <Input 
             type="password" 
             placeholder="••••••••" 
@@ -98,13 +98,13 @@ export function Login() {
       </form>
 
       <div className="mt-6 md:mt-8 text-center text-xs md:text-sm font-medium">
-        <span className="text-zinc-600">
+        <span className="text-zinc-500">
           {isRegister ? "Already have an account? " : "Don't have an account? "}
         </span>
         <button 
           type="button"
           onClick={toggleRegister} 
-          className="text-black dark:text-white hover:underline decoration-zinc-500 underline-offset-4"
+          className="text-white hover:underline decoration-zinc-500 underline-offset-4"
         >
           {isRegister ? "Sign In" : "Create one"}
         </button>

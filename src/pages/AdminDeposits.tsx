@@ -45,15 +45,15 @@ export function AdminDeposits() {
     <div className="space-y-6 md:space-y-8 p-4 md:p-12 max-w-5xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter text-black dark:text-white">Deposits</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 mt-1 font-medium">Manage user deposit requests.</p>
+          <h1 className="text-3xl font-black tracking-tighter text-white">Deposits</h1>
+          <p className="text-zinc-500 mt-1 font-medium">Manage user deposit requests.</p>
         </div>
         
         <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto">
           <select 
             value={statusFilter} 
             onChange={(e: any) => setStatusFilter(e.target.value)}
-            className="bg-zinc-100 dark:bg-[#111] border border-zinc-300 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-sm rounded-xl px-3 py-2 w-full md:w-auto outline-none"
+            className="bg-[#111] border border-zinc-800 text-zinc-300 text-sm rounded-xl px-3 py-2 w-full md:w-auto outline-none"
           >
             <option value="all">All Statuses</option>
             <option value="pending">Pending</option>
@@ -61,12 +61,12 @@ export function AdminDeposits() {
             <option value="rejected">Rejected</option>
           </select>
           <div className="relative flex-1 md:w-64 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 dark:text-zinc-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
             <Input 
               placeholder="Search by name, email or TrxID..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-zinc-100 dark:bg-[#111] border-zinc-300 dark:border-zinc-800"
+              className="pl-9 bg-[#111] border-zinc-800"
             />
           </div>
           {notification && (
@@ -79,11 +79,11 @@ export function AdminDeposits() {
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-xl font-bold text-black dark:text-white">Total Requests ({filteredDeposits.length} of {deposits.length})</h2>
-        <div className="bg-zinc-50 dark:bg-[#0a0a0a] rounded-3xl border border-zinc-200 dark:border-zinc-900 overflow-hidden shadow-sm">
+        <h2 className="text-xl font-bold text-white">Total Requests ({filteredDeposits.length} of {deposits.length})</h2>
+        <div className="bg-[#0a0a0a] rounded-3xl border border-zinc-900 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="text-[10px] uppercase bg-zinc-100 dark:bg-[#111] text-zinc-600 dark:text-zinc-400 font-black tracking-widest border-b border-zinc-200 dark:border-zinc-900">
+              <thead className="text-[10px] uppercase bg-[#111] text-zinc-500 font-black tracking-widest border-b border-zinc-900">
                 <tr>
                   <th className="px-6 py-4">User</th>
                   <th className="px-6 py-4">Amount</th>
@@ -92,19 +92,19 @@ export function AdminDeposits() {
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-900 text-zinc-700 dark:text-zinc-300">
+              <tbody className="divide-y divide-zinc-900 text-zinc-300">
                 {filteredDeposits.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-zinc-600 font-bold">No deposit requests match your filters.</td>
+                    <td colSpan={5} className="px-6 py-12 text-center text-zinc-500 font-bold">No deposit requests match your filters.</td>
                   </tr>
                 ) : filteredDeposits.map((d) => (
-                  <tr key={d.id} className="hover:bg-zinc-200 dark:bg-zinc-900/50 transition-colors">
+                  <tr key={d.id} className="hover:bg-zinc-900/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-black dark:text-white truncate max-w-[150px]">{d.userName}</div>
-                      <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 truncate">{d.userEmail}</div>
+                      <div className="font-bold text-white truncate max-w-[150px]">{d.userName}</div>
+                      <div className="text-xs text-zinc-500 mt-0.5 truncate">{d.userEmail}</div>
                     </td>
-                    <td className="px-6 py-4 font-black tracking-tight text-black dark:text-white">{settings?.currencySymbol || "৳"}{d.amount.toFixed(2)}</td>
-                    <td className="px-6 py-4 font-mono text-xs text-zinc-600 dark:text-zinc-400">{d.trxId}</td>
+                    <td className="px-6 py-4 font-black tracking-tight text-white">{settings?.currencySymbol || "৳"}{d.amount.toFixed(2)}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-zinc-500">{d.trxId}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-widest ${
                         d.status === 'approved' ? 'bg-green-950 text-green-500' : 
@@ -130,7 +130,7 @@ export function AdminDeposits() {
                 ))}
                 {deposits.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-zinc-600 font-bold">No deposit requests yet.</td>
+                    <td colSpan={5} className="px-6 py-12 text-center text-zinc-500 font-bold">No deposit requests yet.</td>
                   </tr>
                 )}
               </tbody>

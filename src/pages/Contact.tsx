@@ -20,17 +20,17 @@ export function Contact() {
     });
   }, []);
 
-  if (loading) return <div className="text-center py-20 text-zinc-600 dark:text-zinc-400 font-medium">Loading contact info...</div>;
+  if (loading) return <div className="text-center py-20 text-zinc-500 font-medium">Loading contact info...</div>;
 
-  if (!admin) return <div className="text-center py-20 text-zinc-600 dark:text-zinc-400 font-medium">No contact information available.</div>;
+  if (!admin) return <div className="text-center py-20 text-zinc-500 font-medium">No contact information available.</div>;
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-4">
       <div className="flex flex-col items-center text-center">
-        <h1 className="text-3xl md:text-5xl font-black tracking-tighter mb-4 text-black dark:text-white">
+        <h1 className="text-3xl md:text-5xl font-black tracking-tighter mb-4 text-white">
           Contact Us
         </h1>
-        <p className="text-base md:text-lg font-medium text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap max-w-xl">
+        <p className="text-base md:text-lg font-medium text-zinc-500 whitespace-pre-wrap max-w-xl">
           {admin.bio || "Reach out to us through any of our social platforms."}
         </p>
 
@@ -57,10 +57,10 @@ export function Contact() {
                   href={href} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="flex items-center justify-between px-6 py-4 bg-zinc-50 dark:bg-[#0a0a0a] border border-zinc-200 dark:border-zinc-900 hover:border-zinc-400 dark:border-zinc-700 rounded-2xl font-bold text-zinc-700 dark:text-zinc-300 hover:text-black dark:text-white hover:bg-zinc-100 dark:bg-[#111] transition-all shadow-sm group"
+                  className="flex items-center justify-between px-6 py-4 bg-[#0a0a0a] border border-zinc-900 hover:border-zinc-700 rounded-2xl font-bold text-zinc-300 hover:text-white hover:bg-[#111] transition-all shadow-sm group"
                 >
                   <span className="text-lg">{link.platform}</span>
-                  <ExternalLink className="w-5 h-5 text-zinc-600 dark:text-zinc-400 group-hover:text-black dark:text-white transition-colors" />
+                  <ExternalLink className="w-5 h-5 text-zinc-500 group-hover:text-white transition-colors" />
                 </a>
               </motion.div>
               );

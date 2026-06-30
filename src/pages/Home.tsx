@@ -21,7 +21,7 @@ export function Home() {
     });
   }, []);
 
-  if (loading) return <div className="text-center py-20 text-zinc-600 dark:text-zinc-400 font-medium">Loading content...</div>;
+  if (loading) return <div className="text-center py-20 text-zinc-500 font-medium">Loading content...</div>;
 
   const activeProducts = products.filter(p => 
     p.isActive !== false && 
@@ -42,12 +42,12 @@ export function Home() {
       {(settings?.heroTitle || settings?.heroSubtitle) && (
         <div className="text-center max-w-2xl mx-auto px-4 mt-2.5">
           {settings?.heroTitle && (
-            <h1 className="text-xl md:text-3xl font-black tracking-tighter mb-1.5 md:mb-2 text-black dark:text-white">
+            <h1 className="text-xl md:text-3xl font-black tracking-tighter mb-1.5 md:mb-2 text-white">
               {settings.heroTitle}
             </h1>
           )}
           {settings?.heroSubtitle && (
-            <p className="text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            <p className="text-xs md:text-sm font-medium text-zinc-500">
               {settings.heroSubtitle}
             </p>
           )}
@@ -66,10 +66,10 @@ export function Home() {
       )}
 
       <div className="mx-4 md:mx-0 relative max-w-md mx-auto">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 dark:text-zinc-400 w-4 h-4" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
         <Input 
           placeholder="Search products..." 
-          className="pl-10 bg-zinc-100 dark:bg-[#111] border-zinc-300 dark:border-zinc-800 text-sm py-4 rounded-xl shadow-inner w-full"
+          className="pl-10 bg-[#111] border-zinc-800 text-sm py-4 rounded-xl shadow-inner w-full"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -77,8 +77,8 @@ export function Home() {
 
       <div className="space-y-8 md:space-y-12">
         {(Object.entries(groupedProducts) as [string, Product[]][]).map(([category, catProducts]) => (
-          <div key={category} className="border-t border-zinc-200 dark:border-zinc-900/50 pt-6 md:pt-8">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-black dark:text-white mb-4 md:mb-6 px-2 md:px-0 uppercase">{category}</h2>
+          <div key={category} className="border-t border-zinc-900/50 pt-6 md:pt-8">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-white mb-4 md:mb-6 px-2 md:px-0 uppercase">{category}</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 px-2 md:px-0">
             {catProducts.map((product, i) => {
               const totalSpent = user?.totalSpent || 0;
@@ -125,20 +125,20 @@ export function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className={`group relative bg-zinc-50 dark:bg-[#0a0a0a] rounded-2xl border border-zinc-200 dark:border-zinc-900 overflow-hidden hover:border-zinc-400 dark:border-zinc-700 transition-all duration-300 shadow-xl ${isLocked ? 'opacity-75 grayscale' : ''}`}
+                className={`group relative bg-[#0a0a0a] rounded-2xl border border-zinc-900 overflow-hidden hover:border-zinc-700 transition-all duration-300 shadow-xl ${isLocked ? 'opacity-75 grayscale' : ''}`}
               >
                 {isLocked ? (
-                  <div className="absolute inset-0 bg-white/60 dark:bg-black/60 z-10 flex flex-col items-center justify-center p-4 text-center cursor-not-allowed" title="আমাদের ওয়েবসাইট থেকে যারা ৫০০০ টাকার জিনিস কিনবে শুধু তারাই এইখান থেকে কিনতে পারবে">
+                  <div className="absolute inset-0 bg-black/60 z-10 flex flex-col items-center justify-center p-4 text-center cursor-not-allowed" title="আমাদের ওয়েবসাইট থেকে যারা ৫০০০ টাকার জিনিস কিনবে শুধু তারাই এইখান থেকে কিনতে পারবে">
                     <div className="bg-amber-500/20 p-3 rounded-full mb-2 border border-amber-500/50">
                       <Lock className="w-6 h-6 text-amber-500" />
                     </div>
                     <p className="text-[10px] md:text-xs font-bold text-amber-500 uppercase tracking-widest mt-1">Premium Customer</p>
-                    <p className="text-[8px] md:text-[9px] text-zinc-700 dark:text-zinc-300 mt-2 font-medium">Requires 5000৳ Total Spent</p>
+                    <p className="text-[8px] md:text-[9px] text-zinc-300 mt-2 font-medium">Requires 5000৳ Total Spent</p>
                   </div>
                 ) : null}
 
                 <Link to={isLocked ? "#" : `/product/${product.id}`} className={`block ${isLocked ? 'pointer-events-none' : ''}`}>
-                  <div className="aspect-square bg-zinc-100 dark:bg-[#111] border-b border-zinc-200 dark:border-zinc-900 overflow-hidden flex items-center justify-center relative">
+                  <div className="aspect-square bg-[#111] border-b border-zinc-900 overflow-hidden flex items-center justify-center relative">
                     {product.imageUrl ? (
                       <img 
                         src={product.imageUrl} 
@@ -146,7 +146,7 @@ export function Home() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
                       />
                     ) : (
-                      <div className="w-1/2 h-1/2 border border-zinc-300 dark:border-zinc-800 opacity-50"></div>
+                      <div className="w-1/2 h-1/2 border border-zinc-800 opacity-50"></div>
                     )}
                     
                     {product.isPremiumOnly && !isLocked && (
@@ -157,13 +157,13 @@ export function Home() {
                   </div>
                   <div className="p-3 md:p-5 flex flex-col gap-1 md:gap-2">
                     <div className="flex justify-between items-start gap-2 md:gap-4">
-                      <h4 className="text-xs md:text-sm font-bold truncate text-black dark:text-white">{product.title}</h4>
-                      <p className="text-xs md:text-sm font-black whitespace-nowrap text-black dark:text-white">
+                      <h4 className="text-xs md:text-sm font-bold truncate text-white">{product.title}</h4>
+                      <p className="text-xs md:text-sm font-black whitespace-nowrap text-white">
                         {product.price !== undefined && product.price !== null ? `${settings?.currencySymbol || "৳"}${product.price.toFixed(0)}` : ""}
                       </p>
                     </div>
                     <div className="flex justify-between items-center mt-1">
-                      <p className="text-[10px] text-zinc-600 dark:text-zinc-400 uppercase font-bold truncate flex-1">
+                      <p className="text-[10px] text-zinc-500 uppercase font-bold truncate flex-1">
                         {product.description || "Premium Product"}
                       </p>
                       
@@ -188,7 +188,7 @@ export function Home() {
                       </div>
 
                       {product.estimatedTime && !isActuallySoldOut && (
-                        <span className="text-[8px] md:text-[9px] bg-zinc-200 dark:bg-[#1a1a1a] border border-zinc-300 dark:border-zinc-800 text-amber-500 px-1.5 py-0.5 rounded font-black tracking-widest uppercase ml-2 whitespace-nowrap">
+                        <span className="text-[8px] md:text-[9px] bg-[#1a1a1a] border border-zinc-800 text-amber-500 px-1.5 py-0.5 rounded font-black tracking-widest uppercase ml-2 whitespace-nowrap">
                            {product.estimatedTime}
                         </span>
                       )}
@@ -204,7 +204,7 @@ export function Home() {
       </div>
 
       {activeProducts.length === 0 && (
-        <div className="text-center py-20 text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-[#0a0a0a] rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800 font-medium">
+        <div className="text-center py-20 text-zinc-500 bg-[#0a0a0a] rounded-xl border border-dashed border-zinc-800 font-medium">
           No products available yet. Come back later!
         </div>
       )}

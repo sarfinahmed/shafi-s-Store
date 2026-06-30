@@ -263,55 +263,55 @@ export function Admin() {
   return (
     <div className="space-y-6 md:space-y-8 p-4 md:p-12 max-w-5xl">
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-zinc-50 dark:bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-200 dark:border-zinc-900">
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-500/10 rounded-lg">
               <ShoppingBag className="w-4 h-4 text-blue-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Products</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Products</span>
           </div>
-          <div className="text-2xl font-black text-black dark:text-white">{stats.totalProducts}</div>
+          <div className="text-2xl font-black text-white">{stats.totalProducts}</div>
         </div>
-        <div className="bg-zinc-50 dark:bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-200 dark:border-zinc-900">
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-purple-500/10 rounded-lg">
               <Users className="w-4 h-4 text-purple-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Users</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Users</span>
           </div>
-          <div className="text-2xl font-black text-black dark:text-white">{stats.totalUsers}</div>
+          <div className="text-2xl font-black text-white">{stats.totalUsers}</div>
         </div>
-        <div className="bg-zinc-50 dark:bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-200 dark:border-zinc-900">
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-amber-500/10 rounded-lg">
               <CreditCard className="w-4 h-4 text-amber-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Orders</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Orders</span>
           </div>
-          <div className="text-2xl font-black text-black dark:text-white">{stats.totalOrders}</div>
+          <div className="text-2xl font-black text-white">{stats.totalOrders}</div>
         </div>
-        <div className="bg-zinc-50 dark:bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-200 dark:border-zinc-900">
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <DollarSign className="w-4 h-4 text-green-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Revenue</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Revenue</span>
           </div>
-          <div className="text-2xl font-black text-black dark:text-white">{settings?.currencySymbol || "৳"}{stats.revenue.toLocaleString()}</div>
+          <div className="text-2xl font-black text-white">{settings?.currencySymbol || "৳"}{stats.revenue.toLocaleString()}</div>
         </div>
-        <div className="bg-zinc-50 dark:bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-200 dark:border-zinc-900">
+        <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-pink-500/10 rounded-lg">
               <Eye className="w-4 h-4 text-pink-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Today's Views</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Today's Views</span>
           </div>
-          <div className="text-2xl font-black text-black dark:text-white">{stats.pageViews}</div>
+          <div className="text-2xl font-black text-white">{stats.pageViews}</div>
         </div>
       </div>
 
-      <div className="bg-zinc-50 dark:bg-[#0a0a0a] p-6 rounded-3xl border border-zinc-200 dark:border-zinc-900 shadow-sm">
-        <h3 className="text-sm font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 mb-6 flex items-center gap-2">
+      <div className="bg-[#0a0a0a] p-6 rounded-3xl border border-zinc-900 shadow-sm">
+        <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-6 flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
           Revenue Overview (Last 7 Days)
         </h3>
@@ -367,8 +367,8 @@ export function Admin() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter text-black dark:text-white">Products</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 mt-1 font-medium">Manage your premium offerings.</p>
+          <h1 className="text-3xl font-black tracking-tighter text-white">Products</h1>
+          <p className="text-zinc-500 mt-1 font-medium">Manage your premium offerings.</p>
         </div>
         {notification && (
           <div className="flex items-center text-green-400 bg-green-950/30 border border-green-900/50 px-4 py-2 rounded-xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
@@ -380,7 +380,7 @@ export function Admin() {
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-black dark:text-white">Total ({products.length})</h2>
+          <h2 className="text-xl font-bold text-white">Total ({products.length})</h2>
           <Button onClick={() => {
             setEditingProduct(null);
             setNewTitle("");
@@ -401,8 +401,8 @@ export function Admin() {
         </div>
 
         {showAddProduct && (
-          <div className="bg-zinc-50 dark:bg-[#0a0a0a] p-6 rounded-3xl border border-zinc-200 dark:border-zinc-900 shadow-2xl space-y-4 mb-6">
-            <h3 className="font-bold text-black dark:text-white">{editingProduct ? "Edit Product" : "New Product Details"}</h3>
+          <div className="bg-[#0a0a0a] p-6 rounded-3xl border border-zinc-900 shadow-2xl space-y-4 mb-6">
+            <h3 className="font-bold text-white">{editingProduct ? "Edit Product" : "New Product Details"}</h3>
             <datalist id="category-list">
               {Array.from(new Set(products.map(p => p.category).filter(Boolean))).map(cat => (
                 <option key={cat} value={cat} />
@@ -421,18 +421,18 @@ export function Admin() {
               <Input placeholder="Specific WhatsApp (e.g. 88017XX)" value={newWhatsappNumber} onChange={e => setNewWhatsappNumber(e.target.value)} />
               <Textarea placeholder="Description" className="md:col-span-2 whitespace-pre-wrap" value={newDesc} onChange={e => setNewDesc(e.target.value)} />
               
-              <div className="md:col-span-2 space-y-3 bg-zinc-100 dark:bg-[#111] p-4 rounded-2xl border border-zinc-300 dark:border-zinc-800">
+              <div className="md:col-span-2 space-y-3 bg-[#111] p-4 rounded-2xl border border-zinc-800">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">Packages / Options</label>
+                  <label className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Packages / Options</label>
                   <Button variant="outline" size="sm" onClick={() => setNewOptionsArr([...newOptionsArr, {name: '', price: '', codes: ''}])}>
                     <Plus className="w-4 h-4 mr-1" /> Add Package
                   </Button>
                 </div>
                 {newOptionsArr.length === 0 && (
-                  <p className="text-xs text-zinc-600 font-medium">Leave empty for a single-item product.</p>
+                  <p className="text-xs text-zinc-500 font-medium">Leave empty for a single-item product.</p>
                 )}
                 {newOptionsArr.map((opt, idx) => (
-                  <div key={idx} className="space-y-2 bg-white/40 dark:bg-black/40 p-4 rounded-xl border border-zinc-300 dark:border-zinc-800">
+                  <div key={idx} className="space-y-2 bg-black/40 p-4 rounded-xl border border-zinc-800">
                     <div className="flex gap-2 items-center">
                       <Input 
                         placeholder="Package Name (e.g. Weekly)" 
@@ -475,12 +475,12 @@ export function Admin() {
                       </Button>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5 ml-1">
+                      <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5 ml-1">
                         Codes for {opt.name || 'this package'} ({opt.codes.split('\n').filter(c => c.trim()).length} in stock)
                       </label>
                       <Textarea 
                         placeholder="Enter codes for this option (one per line)..." 
-                        className="text-xs h-20 bg-zinc-100 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-800"
+                        className="text-xs h-20 bg-zinc-950 border-zinc-800"
                         value={opt.codes}
                         onChange={e => {
                           const updated = [...newOptionsArr];
@@ -493,14 +493,14 @@ export function Admin() {
                 ))}
               </div>
 
-              <div className="md:col-span-2 space-y-3 bg-zinc-100 dark:bg-[#111] p-4 rounded-2xl border border-zinc-300 dark:border-zinc-800 mt-4">
+              <div className="md:col-span-2 space-y-3 bg-[#111] p-4 rounded-2xl border border-zinc-800 mt-4">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">Auto Code Delivery (Fallback / Global)</label>
-                  <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest bg-white/50 dark:bg-black/50 px-2 py-1 rounded border border-white/5">
+                  <label className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Auto Code Delivery (Fallback / Global)</label>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest bg-black/50 px-2 py-1 rounded border border-white/5">
                     {newCodes.split('\n').filter(c => c.trim()).length} In Stock
                   </span>
                 </div>
-                <p className="text-xs text-zinc-600 font-medium">Add codes one per line. These codes are used if no variant-specific codes are available.</p>
+                <p className="text-xs text-zinc-500 font-medium">Add codes one per line. These codes are used if no variant-specific codes are available.</p>
                 <Textarea 
                   placeholder="Enter codes here (one per line)..." 
                   className="whitespace-pre-wrap h-32" 
@@ -509,42 +509,42 @@ export function Admin() {
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5">Redeem Link</label>
+                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Redeem Link</label>
                     <Input placeholder="e.g. https://shop.garena.sg/app" value={newRedeemLink} onChange={e => setNewRedeemLink(e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5">Tutorial Video URL</label>
+                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Tutorial Video URL</label>
                     <Input placeholder="e.g. https://youtube.com/watch?v=..." value={newTutorialVideoUrl} onChange={e => setNewTutorialVideoUrl(e.target.value)} />
                   </div>
                 </div>
               </div>
 
-              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-600 dark:text-zinc-400 mt-4">
+              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-500 mt-4">
                 <input 
                   type="checkbox" 
                   checked={newIsManualFulfillment} 
                   onChange={e => setNewIsManualFulfillment(e.target.checked)}
-                  className="w-4 h-4 bg-zinc-100 dark:bg-[#111] border-zinc-300 dark:border-zinc-800 rounded focus:ring-zinc-600"
+                  className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600"
                 />
                 <span>Manual Fulfillment (Admin completes the order manually, no instant delivery)</span>
               </label>
               
-              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-600 dark:text-zinc-400">
+              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-500">
                 <input 
                   type="checkbox" 
                   checked={newIsSoldOut} 
                   onChange={e => setNewIsSoldOut(e.target.checked)}
-                  className="w-4 h-4 bg-zinc-100 dark:bg-[#111] border-zinc-300 dark:border-zinc-800 rounded focus:ring-zinc-600 text-red-500 focus:ring-red-500"
+                  className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600 text-red-500 focus:ring-red-500"
                 />
                 <span className="text-red-400 font-bold">Mark as Sold Out</span>
               </label>
 
-              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-600 dark:text-zinc-400">
+              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-500">
                 <input 
                   type="checkbox" 
                   checked={newIsPremiumOnly} 
                   onChange={e => setNewIsPremiumOnly(e.target.checked)}
-                  className="w-4 h-4 bg-zinc-100 dark:bg-[#111] border-zinc-300 dark:border-zinc-800 rounded focus:ring-zinc-600 text-amber-500 focus:ring-amber-500"
+                  className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600 text-amber-500 focus:ring-amber-500"
                 />
                 <span className="text-amber-400 font-bold">Premium Customer Only (Requires 5000 ৳ spent)</span>
               </label>
@@ -559,38 +559,38 @@ export function Admin() {
           </div>
         )}
 
-        <div className="bg-zinc-50 dark:bg-[#0a0a0a] rounded-3xl border border-zinc-200 dark:border-zinc-900 overflow-hidden shadow-sm">
+        <div className="bg-[#0a0a0a] rounded-3xl border border-zinc-900 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="text-[10px] uppercase bg-zinc-100 dark:bg-[#111] text-zinc-600 dark:text-zinc-400 font-black tracking-widest border-b border-zinc-200 dark:border-zinc-900">
+              <thead className="text-[10px] uppercase bg-[#111] text-zinc-500 font-black tracking-widest border-b border-zinc-900">
                 <tr>
                   <th className="px-6 py-4">Product</th>
                   <th className="px-6 py-4">Price</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-900 text-zinc-700 dark:text-zinc-300">
+              <tbody className="divide-y divide-zinc-900 text-zinc-300">
                 {products.map((product, index) => (
-                  <tr key={product.id} className="hover:bg-zinc-200 dark:bg-zinc-900/50 transition-colors">
+                  <tr key={product.id} className="hover:bg-zinc-900/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-[#111] overflow-hidden flex-shrink-0 flex items-center justify-center border border-zinc-300 dark:border-zinc-800">
-                          {product.imageUrl ? <img src={product.imageUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-4 h-4 border border-zinc-400 dark:border-zinc-700 opacity-30"></div>}
+                        <div className="w-12 h-12 rounded-xl bg-[#111] overflow-hidden flex-shrink-0 flex items-center justify-center border border-zinc-800">
+                          {product.imageUrl ? <img src={product.imageUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-4 h-4 border border-zinc-700 opacity-30"></div>}
                         </div>
                         <div className="overflow-hidden">
                           <div className="flex items-center gap-2">
-                            <div className={`font-bold truncate ${product.isActive === false ? 'text-zinc-600 dark:text-zinc-400' : 'text-black dark:text-white'}`}>{product.title}</div>
+                            <div className={`font-bold truncate ${product.isActive === false ? 'text-zinc-500' : 'text-white'}`}>{product.title}</div>
                             {product.isActive === false && (
-                              <span className="bg-zinc-200 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 text-[9px] px-1.5 py-0.5 rounded font-black tracking-widest uppercase border border-zinc-300 dark:border-zinc-800">Hidden</span>
+                              <span className="bg-zinc-900 text-zinc-500 text-[9px] px-1.5 py-0.5 rounded font-black tracking-widest uppercase border border-zinc-800">Hidden</span>
                             )}
                           </div>
-                          <div className="text-[10px] uppercase font-bold tracking-widest text-zinc-600 dark:text-zinc-400 truncate mt-1">
+                          <div className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 truncate mt-1">
                             {product.category ? `${product.category} • ` : ""}{product.description || "No description"}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-black text-black dark:text-white">
+                    <td className="px-6 py-4 font-black text-white">
                       {product.price !== undefined && product.price !== null ? `${settings?.currencySymbol || "৳"}${product.price.toFixed(2)}` : "-"}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -600,7 +600,7 @@ export function Admin() {
                           size="sm" 
                           onClick={() => handleMoveProduct(index, 'up')}
                           disabled={index === 0}
-                          className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-800 w-8 h-8 p-0 rounded-xl disabled:opacity-30"
+                          className="text-zinc-500 hover:text-white hover:bg-zinc-800 w-8 h-8 p-0 rounded-xl disabled:opacity-30"
                           title="Move Up"
                         >
                           <ArrowUp className="w-4 h-4 mx-auto" />
@@ -610,7 +610,7 @@ export function Admin() {
                           size="sm" 
                           onClick={() => handleMoveProduct(index, 'down')}
                           disabled={index === products.length - 1}
-                          className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-800 w-8 h-8 p-0 rounded-xl disabled:opacity-30"
+                          className="text-zinc-500 hover:text-white hover:bg-zinc-800 w-8 h-8 p-0 rounded-xl disabled:opacity-30"
                           title="Move Down"
                         >
                           <ArrowDown className="w-4 h-4 mx-auto" />
@@ -619,12 +619,12 @@ export function Admin() {
                           variant="ghost" 
                           size="sm" 
                           onClick={() => handleToggleVisibility(product.id, product.isActive !== false)} 
-                          className={`w-10 h-10 p-0 rounded-xl ${product.isActive !== false ? 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-800' : 'text-amber-500 hover:text-amber-400 hover:bg-amber-950/30'}`}
+                          className={`w-10 h-10 p-0 rounded-xl ${product.isActive !== false ? 'text-zinc-500 hover:text-white hover:bg-zinc-800' : 'text-amber-500 hover:text-amber-400 hover:bg-amber-950/30'}`}
                           title={product.isActive !== false ? "Hide Product" : "Show Product"}
                         >
                           {product.isActive !== false ? <EyeOff className="w-5 h-5 mx-auto" /> : <Eye className="w-5 h-5 mx-auto" />}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDuplicateProduct(product)} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-800 w-10 h-10 p-0 rounded-xl" title="Duplicate Product">
+                        <Button variant="ghost" size="sm" onClick={() => handleDuplicateProduct(product)} className="text-zinc-500 hover:text-white hover:bg-zinc-800 w-10 h-10 p-0 rounded-xl" title="Duplicate Product">
                           <Copy className="w-5 h-5 mx-auto" />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => handleEditClick(product)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-950/30 w-10 h-10 p-0 rounded-xl" title="Edit Product">
@@ -639,7 +639,7 @@ export function Admin() {
                 ))}
                 {products.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-zinc-600 font-bold">No products found.</td>
+                    <td colSpan={3} className="px-6 py-12 text-center text-zinc-500 font-bold">No products found.</td>
                   </tr>
                 )}
               </tbody>
