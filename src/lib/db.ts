@@ -53,13 +53,15 @@ export interface Product {
   deliveryLink?: string;
   whatsappNumber?: string;
   isManualFulfillment?: boolean;
-  options?: { name: string; price: number; stockCount?: number | null }[];
+  options?: { name: string; price: number; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number }[];
   estimatedTime?: string;
   isActive?: boolean;
   sortOrder?: number;
   codes?: string[]; // Generic codes
   optionCodes?: Record<string, string[]>; // Codes mapped to option names (e.g., {"Weekly": ["CODE1"], "Monthly": ["CODE2"]})
   stockCount?: number | null;
+  resellerProductCode?: string; // For API integration
+  resellerQuantity?: number; // For API integration
   redeemLink?: string;
   tutorialVideoUrl?: string;
   isSoldOut?: boolean;
@@ -80,7 +82,7 @@ export interface Order {
   deliveredCode?: string; // Automatically delivered code
   redeemLink?: string;
   tutorialVideoUrl?: string;
-  status?: "pending" | "completed" | "rejected";
+  status?: "pending" | "completed" | "rejected" | "processing" | "success" | "failed";
   createdAt: number;
 }
 
@@ -219,52 +221,71 @@ class FirebaseDatabase {
     // Check if it has codes
     let deliveredCode = undefined;
     
+    // Check if there is a reseller product code
+    let resellerCodeToUse = undefined;
+    let resellerQuantityToUse = 1;
+
     // Always fetch latest product data to check codes to prevent race condition
     const productRef = doc(dbInit, "products", product.id);
     const productSnap = await getDoc(productRef);
     if (productSnap.exists()) {
       const dbProduct = productSnap.data() as Product;
       
-      // Check for option-specific codes first
-      if (selectedOptionName && dbProduct.optionCodes && dbProduct.optionCodes[selectedOptionName]?.length > 0) {
-        const variantCodes = [...dbProduct.optionCodes[selectedOptionName]];
-        deliveredCode = variantCodes[0];
-        const remainingVariantCodes = variantCodes.slice(1);
-        
-        await updateDoc(productRef, {
-          [`optionCodes.${selectedOptionName}`]: remainingVariantCodes
-        });
-      } 
-      // Fallback to generic codes
-      else if (dbProduct.codes && dbProduct.codes.length > 0) {
-        deliveredCode = dbProduct.codes[0];
-        const remainingCodes = dbProduct.codes.slice(1);
-        await updateDoc(productRef, { codes: remainingCodes });
-      } 
-      // Handle stockCount decrement for options
-      else if (selectedOptionName && dbProduct.options) {
-        const optionIndex = dbProduct.options.findIndex(o => o.name === selectedOptionName);
-        if (optionIndex !== -1 && dbProduct.options[optionIndex].stockCount !== undefined && dbProduct.options[optionIndex].stockCount !== null) {
-          const currentStock = dbProduct.options[optionIndex].stockCount;
-          if (currentStock! <= 0) {
+      if (selectedOptionName && dbProduct.options) {
+        const option = dbProduct.options.find(o => o.name === selectedOptionName);
+        if (option && option.resellerProductCode) {
+          resellerCodeToUse = option.resellerProductCode;
+          resellerQuantityToUse = option.resellerQuantity || 1;
+        }
+      }
+      if (!resellerCodeToUse && dbProduct.resellerProductCode) {
+        resellerCodeToUse = dbProduct.resellerProductCode;
+        resellerQuantityToUse = dbProduct.resellerQuantity || 1;
+      }
+
+      if (!resellerCodeToUse) {
+        // Only do normal stock control if we're not using reseller API
+        // Check for option-specific codes first
+        if (selectedOptionName && dbProduct.optionCodes && dbProduct.optionCodes[selectedOptionName]?.length > 0) {
+          const variantCodes = [...dbProduct.optionCodes[selectedOptionName]];
+          deliveredCode = variantCodes[0];
+          const remainingVariantCodes = variantCodes.slice(1);
+          
+          await updateDoc(productRef, {
+            [`optionCodes.${selectedOptionName}`]: remainingVariantCodes
+          });
+        } 
+        // Fallback to generic codes
+        else if (dbProduct.codes && dbProduct.codes.length > 0) {
+          deliveredCode = dbProduct.codes[0];
+          const remainingCodes = dbProduct.codes.slice(1);
+          await updateDoc(productRef, { codes: remainingCodes });
+        } 
+        // Handle stockCount decrement for options
+        else if (selectedOptionName && dbProduct.options) {
+          const optionIndex = dbProduct.options.findIndex(o => o.name === selectedOptionName);
+          if (optionIndex !== -1 && dbProduct.options[optionIndex].stockCount !== undefined && dbProduct.options[optionIndex].stockCount !== null) {
+            const currentStock = dbProduct.options[optionIndex].stockCount;
+            if (currentStock! <= 0) {
+               throw new Error("Product out of stock");
+            }
+            const updatedOptions = [...dbProduct.options];
+            updatedOptions[optionIndex].stockCount = currentStock! - 1;
+            await updateDoc(productRef, { options: updatedOptions });
+          } else if (dbProduct.optionCodes?.[selectedOptionName] !== undefined) {
+             throw new Error("Product out of stock (No codes left for this option)");
+          }
+        }
+        // Handle stockCount decrement for simple products
+        else if (dbProduct.stockCount !== undefined && dbProduct.stockCount !== null) {
+          if (dbProduct.stockCount <= 0) {
              throw new Error("Product out of stock");
           }
-          const updatedOptions = [...dbProduct.options];
-          updatedOptions[optionIndex].stockCount = currentStock! - 1;
-          await updateDoc(productRef, { options: updatedOptions });
-        } else if (dbProduct.optionCodes?.[selectedOptionName] !== undefined) {
-           throw new Error("Product out of stock (No codes left for this option)");
+          await updateDoc(productRef, { stockCount: dbProduct.stockCount - 1 });
         }
-      }
-      // Handle stockCount decrement for simple products
-      else if (dbProduct.stockCount !== undefined && dbProduct.stockCount !== null) {
-        if (dbProduct.stockCount <= 0) {
-           throw new Error("Product out of stock");
+        else if (dbProduct.codes !== undefined) {
+           throw new Error("Product out of stock (No codes left)");
         }
-        await updateDoc(productRef, { stockCount: dbProduct.stockCount - 1 });
-      }
-      else if (dbProduct.codes !== undefined) {
-         throw new Error("Product out of stock (No codes left)");
       }
     }
 
@@ -277,6 +298,17 @@ class FirebaseDatabase {
     await this.logTransaction(userId, product.price, "purchase", `Purchased ${product.title}`);
 
     const orderRef = doc(collection(dbInit, "orders"));
+    
+    // Determine initial status
+    let initialStatus: "pending" | "completed" | "processing" | "failed" = "pending";
+    if (resellerCodeToUse) {
+      initialStatus = "processing";
+    } else if (deliveredCode) {
+      initialStatus = "completed";
+    } else if (!product.isManualFulfillment) {
+      initialStatus = "completed";
+    }
+
     const order: Order = {
       id: orderRef.id,
       userId,
@@ -290,10 +322,45 @@ class FirebaseDatabase {
       deliveredCode,
       redeemLink: product.redeemLink,
       tutorialVideoUrl: product.tutorialVideoUrl,
-      status: deliveredCode ? "completed" : (product.isManualFulfillment ? "pending" : "completed"),
+      status: initialStatus,
       createdAt: Date.now()
     };
     await setDoc(orderRef, order);
+
+    // Call Reseller API if configured
+    if (resellerCodeToUse) {
+      try {
+        const response = await fetch("/api/reseller/order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            uid: userInput,
+            productCode: resellerCodeToUse,
+            quantity: resellerQuantityToUse
+          })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          // Update status to success
+          await updateDoc(orderRef, { status: "success" });
+          order.status = "success";
+        } else {
+          // Update status to failed
+          await updateDoc(orderRef, { status: "failed" });
+          order.status = "failed";
+          console.error("Reseller API reported failure:", data);
+          // Could notify admin here
+        }
+      } catch (err) {
+        console.error("Failed to contact Reseller proxy API", err);
+        await updateDoc(orderRef, { status: "failed" });
+        order.status = "failed";
+      }
+    }
 
     // Call Telegram webhook
     const settings = await this.getSettings();

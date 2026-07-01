@@ -35,9 +35,11 @@ export function Admin() {
   const [newIsManualFulfillment, setNewIsManualFulfillment] = useState(false);
   const [newIsSoldOut, setNewIsSoldOut] = useState(false);
   const [newIsPremiumOnly, setNewIsPremiumOnly] = useState(false);
-  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string; stockCount?: string}[]>([]);
+  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string; stockCount?: string; resellerProductCode?: string; resellerQuantity?: string}[]>([]);
   const [newCodes, setNewCodes] = useState("");
   const [newStockCount, setNewStockCount] = useState("");
+  const [newResellerProductCode, setNewResellerProductCode] = useState("");
+  const [newResellerQuantity, setNewResellerQuantity] = useState("");
   const [newRedeemLink, setNewRedeemLink] = useState("");
   const [newTutorialVideoUrl, setNewTutorialVideoUrl] = useState("");
 
@@ -99,7 +101,7 @@ export function Admin() {
   const handleSaveProduct = async () => {
     if (!newTitle) return;
     
-    let parsedOptions: { name: string; price: number; stockCount?: number | null }[] | undefined = undefined;
+    let parsedOptions: { name: string; price: number; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number }[] | undefined = undefined;
     let optionCodes: Record<string, string[]> = {};
     
     const validOptions = newOptionsArr.filter(opt => opt.name.trim() !== "");
@@ -107,7 +109,9 @@ export function Admin() {
       parsedOptions = validOptions.map(opt => ({
         name: opt.name.trim(),
         price: parseFloat(opt.price) || 0,
-        stockCount: opt.stockCount && opt.stockCount.trim() !== "" ? parseInt(opt.stockCount, 10) : null
+        stockCount: opt.stockCount && opt.stockCount.trim() !== "" ? parseInt(opt.stockCount, 10) : null,
+        resellerProductCode: opt.resellerProductCode?.trim(),
+        resellerQuantity: opt.resellerQuantity && opt.resellerQuantity.trim() !== "" ? parseInt(opt.resellerQuantity, 10) : 1
       }));
       
       validOptions.forEach(opt => {
@@ -135,6 +139,8 @@ export function Admin() {
         codes: newCodes.split('\n').map(c => c.trim()).filter(c => c),
         optionCodes: optionCodes,
         stockCount: newStockCount.trim() !== "" ? parseInt(newStockCount, 10) : null,
+        resellerProductCode: newResellerProductCode.trim(),
+        resellerQuantity: newResellerQuantity.trim() !== "" ? parseInt(newResellerQuantity, 10) : 1,
         redeemLink: newRedeemLink,
         tutorialVideoUrl: newTutorialVideoUrl,
       };
@@ -179,6 +185,8 @@ export function Admin() {
     setNewOptionsArr([]);
     setNewCodes("");
     setNewStockCount("");
+    setNewResellerProductCode("");
+    setNewResellerQuantity("");
     setNewRedeemLink("");
     setNewTutorialVideoUrl("");
     loadData();
@@ -203,10 +211,14 @@ export function Admin() {
       name: o.name, 
       price: o.price.toString(),
       stockCount: o.stockCount !== null && o.stockCount !== undefined ? o.stockCount.toString() : "",
-      codes: (product.optionCodes?.[o.name] || []).join('\n')
+      codes: (product.optionCodes?.[o.name] || []).join('\n'),
+      resellerProductCode: o.resellerProductCode || "",
+      resellerQuantity: o.resellerQuantity !== undefined ? o.resellerQuantity.toString() : ""
     })) : []);
     setNewCodes((product.codes || []).join('\n'));
     setNewStockCount(product.stockCount !== null && product.stockCount !== undefined ? product.stockCount.toString() : "");
+    setNewResellerProductCode(product.resellerProductCode || "");
+    setNewResellerQuantity(product.resellerQuantity !== undefined && product.resellerQuantity !== null ? product.resellerQuantity.toString() : "");
     setNewRedeemLink(product.redeemLink || "");
     setNewTutorialVideoUrl(product.tutorialVideoUrl || "");
     setShowAddProduct(true);
@@ -421,6 +433,10 @@ export function Admin() {
               <Input placeholder="Specific WhatsApp (e.g. 88017XX)" value={newWhatsappNumber} onChange={e => setNewWhatsappNumber(e.target.value)} />
               <Textarea placeholder="Description" className="md:col-span-2 whitespace-pre-wrap" value={newDesc} onChange={e => setNewDesc(e.target.value)} />
               
+              <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                <Input placeholder="Global API Reseller Code (Optional)" value={newResellerProductCode} onChange={e => setNewResellerProductCode(e.target.value)} />
+                <Input type="number" placeholder="Global API Quantity (e.g. 1)" value={newResellerQuantity} onChange={e => setNewResellerQuantity(e.target.value)} />
+              </div>
               <div className="md:col-span-2 space-y-3 bg-[#111] p-4 rounded-2xl border border-zinc-800">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Packages / Options</label>
@@ -473,6 +489,27 @@ export function Admin() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
+                    </div>
+                    <div className="flex gap-2 items-center mt-2">
+                      <Input 
+                        placeholder="API Reseller Code (Optional)" 
+                        value={opt.resellerProductCode || ""} 
+                        onChange={e => {
+                          const updated = [...newOptionsArr];
+                          updated[idx].resellerProductCode = e.target.value;
+                          setNewOptionsArr(updated);
+                        }} 
+                      />
+                      <Input 
+                        type="number" 
+                        placeholder="API Quantity (e.g. 1)" 
+                        value={opt.resellerQuantity || ""} 
+                        onChange={e => {
+                          const updated = [...newOptionsArr];
+                          updated[idx].resellerQuantity = e.target.value;
+                          setNewOptionsArr(updated);
+                        }} 
+                      />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5 ml-1">

@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Function to check if the user is an admin
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Function to check if the user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    match /products/{productId} {
+      // Anyone can read products
+      allow read: if true;
+      // Only admins can create, update, or delete products
+      allow write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      // Users can read their own data, admins can read all
+      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
+      // Users can create their own profile, but cannot set isAdmin to true
+      allow create: if isAuth() && request.auth.uid == userId && (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false);
+      // Users can update their own profile (but not change isAdmin), admins can update all
+      allow update: if isAuth() && ((request.auth.uid == userId && (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == resource.data.isAdmin)) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      // Users can read their own orders, admins can read all
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Users can create orders, admins can create orders
+      allow create: if isAuth();
+      // Only admins can update or delete orders
+      allow update, delete: if isAdmin();
+    }
+
+    match /transactions/{transactionId} {
+      // Users can read their own transactions, admins can read all
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Users can create deposit requests
+      allow create: if isAuth();
+      // Only admins can update or delete transactions (approve/reject)
+      allow update, delete: if isAdmin();
+    }
+
+    match /settings/{document=**} {
+      // Anyone can read settings (for app config)
+      allow read: if true;
+      // Only admins can modify settings
+      allow write: if isAdmin();
+    }
+
+    match /stats/{document=**} {
+      // Anyone can read and update stats (page views)
+      allow read, write: if true;
+    }
+  }
+}

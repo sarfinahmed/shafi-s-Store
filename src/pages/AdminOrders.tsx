@@ -9,7 +9,7 @@ export function AdminOrders() {
   const { settings } = useConfig();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed" | "rejected">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed" | "rejected" | "processing" | "success" | "failed">("all");
   const [actionLinkId, setActionLinkId] = useState<string | null>(null);
   const [actionLinkInput, setActionLinkInput] = useState("");
 
@@ -24,8 +24,8 @@ export function AdminOrders() {
     loadData();
   }, []);
 
-  const handleUpdateStatus = async (order: Order, status: "completed" | "rejected") => {
-    if (status === "completed" && actionLinkId === order.id) {
+  const handleUpdateStatus = async (order: Order, status: "completed" | "rejected" | "success" | "failed") => {
+    if ((status === "completed" || status === "success") && actionLinkId === order.id) {
       await db.updateOrderStatus(order.id, status, actionLinkInput);
       setActionLinkId(null);
       setActionLinkInput("");
@@ -89,6 +89,9 @@ export function AdminOrders() {
             <option value="pending">Pending</option>
             <option value="completed">Completed</option>
             <option value="rejected">Rejected</option>
+            <option value="processing">Processing</option>
+            <option value="success">Success</option>
+            <option value="failed">Failed</option>
           </select>
           <div className="relative flex-1 md:w-64 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
@@ -152,14 +155,14 @@ export function AdminOrders() {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`text-xs px-2 py-1 rounded-full font-bold uppercase tracking-widest ${
-                      order.status === 'completed' || !order.status ? 'bg-green-950 text-green-500' : 
-                      order.status === 'rejected' ? 'bg-red-950 text-red-500' : 'bg-amber-950 text-amber-500'
+                      (order.status === 'completed' || order.status === 'success' || !order.status) ? 'bg-green-950 text-green-500' : 
+                      (order.status === 'rejected' || order.status === 'failed') ? 'bg-red-950 text-red-500' : 'bg-amber-950 text-amber-500'
                     }`}>
                       {order.status || 'completed'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    {order.status === 'pending' && (
+                    {(order.status === 'pending' || order.status === 'processing' || order.status === 'failed') && (
                       <div className="flex gap-2 min-w-[200px]">
                         {actionLinkId === order.id ? (
                           <div className="flex gap-2 w-full">
@@ -169,21 +172,21 @@ export function AdminOrders() {
                               onChange={e => setActionLinkInput(e.target.value)} 
                               className="text-xs h-8 px-2"
                             />
-                            <Button size="sm" className="h-8" onClick={() => handleUpdateStatus(order, "completed")}>OK</Button>
+                            <Button size="sm" className="h-8" onClick={() => handleUpdateStatus(order, "success")}>OK</Button>
                           </div>
                         ) : (
                           <>
                             <Button size="sm" variant="outline" className="text-xs text-green-500 border-green-900 hover:bg-green-950" onClick={() => setActionLinkId(order.id)}>
                               Complete
                             </Button>
-                            <Button size="sm" variant="outline" className="text-xs text-red-500 border-red-900 hover:bg-red-950" onClick={() => handleUpdateStatus(order, "rejected")}>
-                              Reject
+                            <Button size="sm" variant="outline" className="text-xs text-red-500 border-red-900 hover:bg-red-950" onClick={() => handleUpdateStatus(order, "failed")}>
+                              Fail/Reject
                             </Button>
                           </>
                         )}
                       </div>
                     )}
-                    {(order.status === 'completed' || !order.status) && order.deliveryLink && (
+                    {(order.status === 'completed' || order.status === 'success' || !order.status) && order.deliveryLink && (
                        <a href={order.deliveryLink} target="_blank" rel="noreferrer" className="text-xs text-zinc-500 hover:text-white underline">View Link</a>
                     )}
                   </td>
