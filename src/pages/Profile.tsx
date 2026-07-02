@@ -116,8 +116,13 @@ export function Profile() {
   };
 
   const handleDeleteLink = async (id: string) => {
-    await db.removeLink(id);
-    setLinks(links.filter(l => l.id !== id));
+    try {
+      await db.removeLink(id);
+      setLinks(links.filter(l => l.id !== id));
+    } catch (err) {
+      console.error("Failed to delete link:", err);
+      alert("Failed to delete link. Make sure you have the right permissions.");
+    }
   };
 
   return (

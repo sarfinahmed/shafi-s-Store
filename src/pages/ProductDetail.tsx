@@ -176,13 +176,13 @@ export function ProductDetail() {
                   <button
                     key={i}
                     onClick={() => setSelectedOption(opt)}
-                    className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl border transition-all h-full min-h-[90px] ${
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all h-[105px] md:h-[120px] ${
                       selectedOption === opt 
                         ? 'bg-zinc-800 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.15)] ring-1 ring-green-500/50' 
                         : 'bg-[#111] border-zinc-800 hover:border-zinc-500 hover:bg-zinc-900'
                     }`}
                   >
-                    <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wide text-center mb-1 leading-snug ${selectedOption === opt ? 'text-white' : 'text-zinc-300'}`}>{opt.name}</span>
+                    <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wide text-center mb-1 leading-tight line-clamp-2 ${selectedOption === opt ? 'text-white' : 'text-zinc-300'}`}>{opt.name}</span>
                     <div className="flex flex-col items-center">
                       {opt.price !== undefined && opt.price !== null && (
                         <span className={`text-xs md:text-sm font-black ${selectedOption === opt ? 'text-green-400' : 'text-orange-400'}`}>

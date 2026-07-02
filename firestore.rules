@@ -21,7 +21,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Users can read their own data, admins can read all
-      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow read: if isAuth() && (request.auth.uid == userId || isAdmin() || resource.data.isAdmin == true);
       // Users can create their own profile, but cannot set isAdmin to true unless authorized
       allow create: if isAuth() && request.auth.uid == userId && (
         (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false) ||
