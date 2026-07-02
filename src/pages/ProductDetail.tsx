@@ -131,7 +131,7 @@ export function ProductDetail() {
   }
 
   return (
-    <div className="max-w-2xl md:max-w-4xl mx-auto py-2 md:py-6 px-4 md:px-0">
+    <div className="max-w-2xl md:max-w-4xl mx-auto py-2 md:py-6">
       <Link to="/" className="inline-flex items-center text-xs font-medium text-zinc-500 hover:text-white mb-4 transition-colors">
         <ArrowLeft className="w-3 h-3 mr-2" /> Back to Products
       </Link>
@@ -176,7 +176,7 @@ export function ProductDetail() {
                   <button
                     key={i}
                     onClick={() => setSelectedOption(opt)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all h-[105px] md:h-[120px] ${
+                    className={`w-full overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl border transition-all h-[105px] md:h-[120px] ${
                       selectedOption === opt 
                         ? 'bg-zinc-800 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.15)] ring-1 ring-green-500/50' 
                         : 'bg-[#111] border-zinc-800 hover:border-zinc-500 hover:bg-zinc-900'

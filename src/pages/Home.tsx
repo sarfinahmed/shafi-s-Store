@@ -40,7 +40,7 @@ export function Home() {
   return (
     <div className="space-y-4 md:space-y-8">
       {(settings?.heroTitle || settings?.heroSubtitle) && (
-        <div className="text-center max-w-2xl mx-auto px-4 mt-2.5">
+        <div className="text-center max-w-2xl mx-auto mt-2.5">
           {settings?.heroTitle && (
             <h1 className="text-xl md:text-3xl font-black tracking-tighter mb-1.5 md:mb-2 text-white">
               {settings.heroTitle}
@@ -55,7 +55,7 @@ export function Home() {
       )}
 
       {settings?.noticeBanner && (
-        <div className="mx-4 md:mx-0 bg-orange-950/30 border border-orange-900/50 rounded-lg p-2.5 flex items-center gap-2">
+        <div className=" bg-orange-950/30 border border-orange-900/50 rounded-lg p-2.5 flex items-center gap-2">
           <div className="text-orange-500 flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
           </div>
@@ -65,7 +65,7 @@ export function Home() {
         </div>
       )}
 
-      <div className="mx-4 md:mx-0 relative max-w-md mx-auto">
+      <div className=" relative max-w-md mx-auto">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
         <Input 
           placeholder="Search products..." 
@@ -78,8 +78,8 @@ export function Home() {
       <div className="space-y-8 md:space-y-12">
         {(Object.entries(groupedProducts) as [string, Product[]][]).map(([category, catProducts]) => (
           <div key={category} className="border-t border-zinc-900/50 pt-6 md:pt-8">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-white mb-4 md:mb-6 px-2 md:px-0 uppercase">{category}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 px-2 md:px-0">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-white mb-4 md:mb-6  uppercase">{category}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 ">
             {catProducts.map((product, i) => {
               const totalSpent = user?.totalSpent || 0;
               const isLocked = product.isPremiumOnly && totalSpent < 5000;

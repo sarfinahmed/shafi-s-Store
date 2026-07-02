@@ -25,7 +25,7 @@ export function Contact() {
   if (!admin) return <div className="text-center py-20 text-zinc-500 font-medium">No contact information available.</div>;
 
   return (
-    <div className="max-w-2xl mx-auto py-12 px-4">
+    <div className="max-w-2xl mx-auto py-12">
       <div className="flex flex-col items-center text-center">
         <h1 className="text-3xl md:text-5xl font-black tracking-tighter mb-4 text-white">
           Contact Us

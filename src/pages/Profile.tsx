@@ -126,7 +126,7 @@ export function Profile() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 md:space-y-8 px-4 md:px-0 mt-4 md:mt-8">
+    <div className="max-w-2xl mx-auto space-y-6 md:space-y-8 mt-4 md:mt-8">
       {/* Profile Header */}
       <section className="bg-[#0a0a0a] border border-zinc-900 rounded-3xl p-5 md:p-8 shadow-sm flex flex-col md:flex-row gap-5 md:gap-8 items-center md:items-start text-center md:text-left">
         <div className="w-20 h-20 md:w-28 md:h-28 bg-[#111] rounded-3xl border border-zinc-800 flex-shrink-0 flex items-center justify-center overflow-hidden">

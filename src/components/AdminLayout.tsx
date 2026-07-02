@@ -10,7 +10,7 @@ export function AdminLayout() {
   const { settings } = useConfig();
 
   return (
-    <div className="bg-black text-white font-sans md:h-screen w-full flex flex-col md:flex-row selection:bg-zinc-800 selection:text-white">
+    <div className="bg-black text-white font-sans md:h-screen w-full flex flex-col md:flex-row selection:bg-zinc-800 selection:text-white overflow-x-hidden">
       {/* Sidebar / Topnav on mobile */}
       <aside className="w-full md:w-64 bg-black border-b md:border-b-0 md:border-r border-zinc-900 flex flex-col z-10 relative shadow-2xl flex-shrink-0">
         <div className="p-4 md:p-8 flex justify-between items-center md:block">

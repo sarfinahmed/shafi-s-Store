@@ -42,7 +42,7 @@ export function AdminDeposits() {
   }).sort((a, b) => b.createdAt - a.createdAt);
 
   return (
-    <div className="space-y-6 md:space-y-8 p-4 md:p-12 max-w-5xl">
+    <div className="space-y-6 md:space-y-8 p-4 md:p-8 max-w-5xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-white">Deposits</h1>

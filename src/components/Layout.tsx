@@ -10,7 +10,7 @@ export function Layout() {
   const { settings } = useConfig();
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans selection:bg-zinc-800 selection:text-white">
+    <div className="min-h-screen bg-black text-white flex flex-col font-sans selection:bg-zinc-800 selection:text-white overflow-x-hidden w-full">
       <header className="sticky top-0 z-50 w-full border-b border-zinc-900 bg-black/80 backdrop-blur-md">
         <div className="container mx-auto px-4 md:px-10 h-16 md:h-20 flex items-center justify-between">
           <Link to="/" className="text-xl md:text-2xl font-black tracking-tighter text-white flex items-center gap-2 md:gap-3">
@@ -65,7 +65,7 @@ export function Layout() {
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
         <Outlet />
       </main>
-      <footer className="border-t border-zinc-900 bg-black text-center py-6 mx-4 md:mx-0 md:py-8 text-xs md:text-sm text-zinc-500 font-medium">
+      <footer className="border-t border-zinc-900 bg-black text-center py-6 md:py-8 text-xs md:text-sm text-zinc-500 font-medium">
         © {new Date().getFullYear()} {settings?.appName || "Loading..."}. All rights reserved.
       </footer>
     </div>

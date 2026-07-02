@@ -9,7 +9,7 @@ export function Tutorial() {
   const tutorialContent = settings?.tutorialContent || "No tutorial content available yet. Please check back later.";
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6">
+    <div className="max-w-4xl mx-auto py-12">
       <div className="flex items-center space-x-3 mb-8">
         <BookOpen className="w-8 h-8 text-indigo-500" />
         <h1 className="text-3xl font-black text-white tracking-tight">How to Topup & Redeem</h1>

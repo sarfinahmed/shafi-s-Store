@@ -46,7 +46,7 @@ export function Login() {
   };
 
   return (
-    <div className="max-w-sm md:max-w-md mx-auto mt-8 md:mt-20 p-5 md:p-10 bg-[#0a0a0a] rounded-2xl md:rounded-3xl shadow-2xl border border-zinc-900 mx-4">
+    <div className="max-w-sm md:max-w-md mx-auto mt-8 md:mt-20 p-5 md:p-10 bg-[#0a0a0a] rounded-2xl md:rounded-3xl shadow-2xl border border-zinc-900">
       <div className="text-center mb-5 md:mb-8">
         <h1 className="text-xl md:text-3xl font-black tracking-tighter text-white">
           {isRegister ? "Create Account" : "Welcome Back"}
