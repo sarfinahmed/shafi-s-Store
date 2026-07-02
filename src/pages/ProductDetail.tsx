@@ -4,7 +4,7 @@ import { db, Product } from "../lib/db";
 import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
 import { Button } from "../components/ui";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Lock } from "lucide-react";
 import { motion } from "motion/react";
 
 export function ProductDetail() {
@@ -18,7 +18,7 @@ export function ProductDetail() {
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [userInput, setUserInput] = useState("");
   const [orderLink, setOrderLink] = useState("");
-  const [selectedOption, setSelectedOption] = useState<{name: string, price: number} | null>(null);
+  const [selectedOption, setSelectedOption] = useState<{name: string, price?: number | null, stockCount?: number | null} | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -171,22 +171,24 @@ export function ProductDetail() {
               <h2 className="text-sm font-bold text-white uppercase tracking-widest">Select Recharge</h2>
             </div>
             <div className="p-4 md:p-5 text-[#E6E6E6]">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
                 {product.options.map((opt, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedOption(opt)}
-                    className={`flex flex-row items-center justify-between p-4 rounded-xl border transition-all ${
+                    className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl border transition-all h-full min-h-[90px] ${
                       selectedOption === opt 
                         ? 'bg-zinc-800 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.15)] ring-1 ring-green-500/50' 
                         : 'bg-[#111] border-zinc-800 hover:border-zinc-500 hover:bg-zinc-900'
                     }`}
                   >
-                    <span className={`text-xs md:text-sm font-bold uppercase tracking-wide ${selectedOption === opt ? 'text-white' : 'text-zinc-300'}`}>{opt.name}</span>
-                    <div className="flex flex-col items-end">
-                      <span className={`text-sm md:text-base font-black ${selectedOption === opt ? 'text-green-400' : 'text-orange-400'}`}>
-                        {opt.price.toFixed(0)}{settings?.currencySymbol || "৳"}
-                      </span>
+                    <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wide text-center mb-1 leading-snug ${selectedOption === opt ? 'text-white' : 'text-zinc-300'}`}>{opt.name}</span>
+                    <div className="flex flex-col items-center">
+                      {opt.price !== undefined && opt.price !== null && (
+                        <span className={`text-xs md:text-sm font-black ${selectedOption === opt ? 'text-green-400' : 'text-orange-400'}`}>
+                          {settings?.currencySymbol || "BDT"} {opt.price.toFixed(0)}
+                        </span>
+                      )}
                       {(() => {
                         let stockDisplay = null;
                         if (product.optionCodes?.[opt.name] !== undefined && product.optionCodes[opt.name].length > 0) {
@@ -200,7 +202,7 @@ export function ProductDetail() {
                         if (product.isSoldOut) stockDisplay = 'Sold Out';
 
                         return (
-                          <span className={`text-[9px] font-bold uppercase tracking-tighter mt-0.5 ${stockDisplay === 'Out of Stock' || stockDisplay === 'Sold Out' ? 'text-red-500' : (stockDisplay === 'Unlimited' ? 'text-blue-500' : 'text-zinc-500')}`}>
+                          <span className={`text-[9px] font-bold uppercase tracking-tighter mt-1 ${stockDisplay === 'Out of Stock' || stockDisplay === 'Sold Out' ? 'text-red-500' : (stockDisplay === 'Unlimited' ? 'text-blue-500' : 'text-zinc-500')}`}>
                             {stockDisplay}
                           </span>
                         );

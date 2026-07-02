@@ -28,6 +28,11 @@ export function Layout() {
                 Contact
               </Button>
             </Link>
+            <Link to="/tutorial">
+              <Button variant="ghost" className="px-2 sm:px-4 text-zinc-500 hover:text-white hover:bg-zinc-900">
+                Tutorial
+              </Button>
+            </Link>
             {user ? (
               <>
                 <Link to="/profile">

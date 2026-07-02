@@ -3,15 +3,20 @@ import { cn } from "../lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "danger" | "ghost";
+  size?: "default" | "sm" | "lg" | "icon";
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "default", ...props }, ref) => {
+  ({ className, variant = "default", size = "default", ...props }, ref) => {
     return (
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center px-4 py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:pointer-events-none",
+          "inline-flex items-center justify-center text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:pointer-events-none",
+          size === "default" && "px-4 py-2",
+          size === "sm" && "px-3 py-1.5 text-xs",
+          size === "lg" && "px-8 py-3 text-base",
+          size === "icon" && "h-10 w-10 p-0",
           variant === "default" && "bg-white text-black rounded-lg font-bold hover:bg-zinc-200 focus:ring-white",
           variant === "outline" && "border border-zinc-800 bg-transparent text-zinc-300 rounded-lg font-bold hover:border-zinc-700 hover:text-white hover:bg-zinc-900 focus:ring-zinc-700",
           variant === "danger" && "bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 focus:ring-red-500",

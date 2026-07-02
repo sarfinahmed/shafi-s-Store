@@ -21,6 +21,7 @@ import { AdminDeposits } from "./pages/AdminDeposits";
 import { AdminOrders } from "./pages/AdminOrders";
 import { AdminTransactions } from "./pages/AdminTransactions";
 import { Contact } from "./pages/Contact";
+import { Tutorial } from "./pages/Tutorial";
 import { GlobalMaintenance } from "./components/GlobalMaintenance";
 
 // Simple wrapper to ensure users only
@@ -63,6 +64,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/tutorial" element={<Tutorial />} />
               <Route path="/login" element={<Login />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route 

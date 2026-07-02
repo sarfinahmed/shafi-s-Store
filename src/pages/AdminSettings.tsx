@@ -27,6 +27,7 @@ export function AdminSettings() {
   const [garenaShellApiKey, setGarenaShellApiKey] = useState(settings?.garenaShellApiKey || "");
   const [unipinApiUrl, setUnipinApiUrl] = useState(settings?.unipinApiUrl || "");
   const [unipinApiKey, setUnipinApiKey] = useState(settings?.unipinApiKey || "");
+  const [tutorialContent, setTutorialContent] = useState(settings?.tutorialContent || "");
   
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState("");
@@ -57,7 +58,8 @@ export function AdminSettings() {
       garenaShellApiUrl,
       garenaShellApiKey,
       unipinApiUrl,
-      unipinApiKey
+      unipinApiKey,
+      tutorialContent
     });
     setSaving(false);
     notify("Settings saved successfully");
@@ -175,6 +177,16 @@ export function AdminSettings() {
               onChange={e => setNoticeBanner(e.target.value)} 
               placeholder="e.g. Due to a server issue, instant delivery might be delayed..."
               className="resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Tutorial Content (Markdown supported)</label>
+            <Textarea 
+              value={tutorialContent} 
+              onChange={e => setTutorialContent(e.target.value)} 
+              placeholder="Write a guide for users on how to topup or redeem codes. You can use markdown."
+              className="resize-none h-40"
             />
           </div>
 

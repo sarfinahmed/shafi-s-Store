@@ -540,7 +540,7 @@ export function Profile() {
                   <span className="text-xs font-black uppercase tracking-widest text-white">{link.platform}</span>
                   <button 
                     onClick={() => handleDeleteLink(link.id)}
-                    className="p-1.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

@@ -53,7 +53,7 @@ export interface Product {
   deliveryLink?: string;
   whatsappNumber?: string;
   isManualFulfillment?: boolean;
-  options?: { name: string; price: number; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number }[];
+  options?: { name: string; price?: number | null; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number }[];
   estimatedTime?: string;
   isActive?: boolean;
   sortOrder?: number;
@@ -110,6 +110,7 @@ export interface AppSettings {
   garenaShellApiKey?: string;
   unipinApiUrl?: string;
   unipinApiKey?: string;
+  tutorialContent?: string;
 }
 
 class FirebaseDatabase {
@@ -123,12 +124,16 @@ class FirebaseDatabase {
       return data;
     }
     const defaultSettings: AppSettings = {
-      appName: "Shafi Topup",
+      appName: "bdtopupbazaar",
       heroTitle: "Discover Premium Products",
       heroSubtitle: "Browse the latest offerings and curate your own digital showcase.",
       currencySymbol: "৳"
     };
-    await setDoc(ref, defaultSettings);
+    try {
+      await setDoc(ref, defaultSettings);
+    } catch (e) {
+      console.warn("Could not save default settings, probably due to permissions. Proceeding with defaults in-memory.");
+    }
     return defaultSettings;
   }
 
@@ -147,19 +152,36 @@ class FirebaseDatabase {
   async login(email: string, id: string, name: string): Promise<User> {
     const userRef = doc(dbInit, "users", id);
     const userSnap = await getDoc(userRef);
+    
+    const isAdminEmail = email === "admin@shafilink.com" || email === "koro@shafilink.com" || email === "piccisarfin@gmail.com";
+
     if (userSnap.exists()) {
-      return userSnap.data() as User;
+      const userData = userSnap.data() as User;
+      if (isAdminEmail && !userData.isAdmin) {
+        // Auto-upgrade to admin
+        try {
+          await updateDoc(userRef, { isAdmin: true });
+        } catch(e) {
+          console.error("Failed to auto-upgrade admin", e);
+        }
+        userData.isAdmin = true;
+      }
+      return userData;
     } else {
       const newUser: User = {
         id,
         email,
         name: name || email.split("@")[0],
         bio: "New user",
-        isAdmin: email === "admin@shafilink.com" || email === "koro@shafilink.com" || email === "piccisarfin@gmail.com",
+        isAdmin: isAdminEmail,
         balance: 0,
         purchasedProducts: [],
       };
-      await setDoc(userRef, newUser);
+      try {
+        await setDoc(userRef, newUser);
+      } catch (e) {
+        console.error("Failed to create user doc", e);
+      }
       return newUser;
     }
   }
@@ -195,16 +217,18 @@ class FirebaseDatabase {
 
   async getTransactions(userId?: string): Promise<Transaction[]> {
     let q;
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     if (userId) {
       q = query(collection(dbInit, "transactions"), where("userId", "==", userId));
     } else {
-      q = query(collection(dbInit, "transactions"), orderBy("createdAt", "desc"));
+      q = query(collection(dbInit, "transactions"), where("createdAt", ">=", oneMonthAgo), orderBy("createdAt", "desc"));
     }
     
     const snap = await getDocs(q);
-    const transactions = snap.docs.map(d => d.data() as Transaction);
+    let transactions = snap.docs.map(d => d.data() as Transaction);
     
     if (userId) {
+      transactions = transactions.filter(t => t.createdAt >= oneMonthAgo);
       return transactions.sort((a, b) => b.createdAt - a.createdAt);
     }
     return transactions;
@@ -216,7 +240,8 @@ class FirebaseDatabase {
     if (!userSnap.exists()) throw new Error("User not found");
     const u = userSnap.data() as User;
     const balance = u.balance || 0;
-    if (balance < product.price) throw new Error("Insufficient funds");
+    const priceToDeduct = product.price || 0;
+    if (balance < priceToDeduct) throw new Error("Insufficient funds");
     
     // Check if it has codes
     let deliveredCode = undefined;
@@ -290,12 +315,12 @@ class FirebaseDatabase {
     }
 
     await updateDoc(userRef, {
-      balance: balance - product.price,
-      totalSpent: (u.totalSpent || 0) + product.price,
+      balance: balance - priceToDeduct,
+      totalSpent: (u.totalSpent || 0) + priceToDeduct,
       purchasedProducts: [...(u.purchasedProducts || []), product.id]
     });
 
-    await this.logTransaction(userId, product.price, "purchase", `Purchased ${product.title}`);
+    await this.logTransaction(userId, priceToDeduct, "purchase", `Purchased ${product.title}`);
 
     const orderRef = doc(collection(dbInit, "orders"));
     
@@ -315,7 +340,7 @@ class FirebaseDatabase {
       userEmail: u.email,
       productId: product.id,
       productTitle: product.title,
-      price: product.price,
+      price: priceToDeduct,
       userInput: userInput || "",
       selectedOptionName,
       deliveryLink: product.isManualFulfillment && !deliveredCode ? "" : (product.deliveryLink || ""),
@@ -380,7 +405,7 @@ class FirebaseDatabase {
     return order;
   }
 
-  async updateOrderStatus(orderId: string, status: "pending" | "completed" | "rejected", deliveryLink?: string) {
+  async updateOrderStatus(orderId: string, status: "pending" | "completed" | "rejected" | "processing" | "success" | "failed", deliveryLink?: string) {
     const orderRef = doc(dbInit, "orders", orderId);
     let updateData: any = { status };
     if (deliveryLink !== undefined) {
@@ -391,15 +416,17 @@ class FirebaseDatabase {
 
   // --- Orders ---
   async getOrders(): Promise<Order[]> {
-    const q = query(collection(dbInit, "orders"), orderBy("createdAt", "desc"));
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const q = query(collection(dbInit, "orders"), where("createdAt", ">=", oneMonthAgo), orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
     return snap.docs.map(d => d.data() as Order);
   }
 
   async getUserOrders(userId: string): Promise<Order[]> {
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const q = query(collection(dbInit, "orders"), where("userId", "==", userId));
     const snap = await getDocs(q);
-    const orders = snap.docs.map(d => d.data() as Order);
+    const orders = snap.docs.map(d => d.data() as Order).filter(o => o.createdAt >= oneMonthAgo);
     return orders.sort((a, b) => b.createdAt - a.createdAt);
   }
 
@@ -438,19 +465,24 @@ class FirebaseDatabase {
   }
 
   async getDepositRequests(status?: "pending" | "approved" | "rejected"): Promise<DepositRequest[]> {
-    let q = query(collection(dbInit, "deposits"));
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    let q = query(collection(dbInit, "deposits"), where("createdAt", ">=", oneMonthAgo));
     if (status) {
       q = query(collection(dbInit, "deposits"), where("status", "==", status));
     }
     const snap = await getDocs(q);
-    const deposits = snap.docs.map(d => d.data() as DepositRequest);
+    let deposits = snap.docs.map(d => d.data() as DepositRequest);
+    if (status) {
+      deposits = deposits.filter(d => d.createdAt >= oneMonthAgo);
+    }
     return deposits.sort((a, b) => b.createdAt - a.createdAt);
   }
 
   async getUserDepositRequests(userId: string): Promise<DepositRequest[]> {
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const q = query(collection(dbInit, "deposits"), where("userId", "==", userId));
     const snap = await getDocs(q);
-    const deposits = snap.docs.map(d => d.data() as DepositRequest);
+    const deposits = snap.docs.map(d => d.data() as DepositRequest).filter(d => d.createdAt >= oneMonthAgo);
     return deposits.sort((a, b) => b.createdAt - a.createdAt);
   }
 

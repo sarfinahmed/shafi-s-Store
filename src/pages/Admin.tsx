@@ -101,14 +101,14 @@ export function Admin() {
   const handleSaveProduct = async () => {
     if (!newTitle) return;
     
-    let parsedOptions: { name: string; price: number; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number }[] | undefined = undefined;
+    let parsedOptions: { name: string; price?: number | null; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number }[] | undefined = undefined;
     let optionCodes: Record<string, string[]> = {};
     
     const validOptions = newOptionsArr.filter(opt => opt.name.trim() !== "");
     if (validOptions.length > 0) {
       parsedOptions = validOptions.map(opt => ({
         name: opt.name.trim(),
-        price: parseFloat(opt.price) || 0,
+        price: opt.price && opt.price.trim() !== "" ? parseFloat(opt.price) : null,
         stockCount: opt.stockCount && opt.stockCount.trim() !== "" ? parseInt(opt.stockCount, 10) : null,
         resellerProductCode: opt.resellerProductCode?.trim(),
         resellerQuantity: opt.resellerQuantity && opt.resellerQuantity.trim() !== "" ? parseInt(opt.resellerQuantity, 10) : 1
@@ -209,7 +209,7 @@ export function Admin() {
     setNewIsPremiumOnly(product.isPremiumOnly || false);
     setNewOptionsArr(product.options ? product.options.map(o => ({ 
       name: o.name, 
-      price: o.price.toString(),
+      price: o.price !== undefined && o.price !== null ? o.price.toString() : "",
       stockCount: o.stockCount !== null && o.stockCount !== undefined ? o.stockCount.toString() : "",
       codes: (product.optionCodes?.[o.name] || []).join('\n'),
       resellerProductCode: o.resellerProductCode || "",

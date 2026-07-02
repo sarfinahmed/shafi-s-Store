@@ -22,10 +22,13 @@ service cloud.firestore {
     match /users/{userId} {
       // Users can read their own data, admins can read all
       allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
-      // Users can create their own profile, but cannot set isAdmin to true
-      allow create: if isAuth() && request.auth.uid == userId && (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false);
-      // Users can update their own profile (but not change isAdmin), admins can update all
-      allow update: if isAuth() && ((request.auth.uid == userId && (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == resource.data.isAdmin)) || isAdmin());
+      // Users can create their own profile, but cannot set isAdmin to true unless authorized
+      allow create: if isAuth() && request.auth.uid == userId && (
+        (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false) ||
+        (request.auth.token.email in ['admin@shafilink.com', 'koro@shafilink.com', 'piccisarfin@gmail.com'])
+      );
+      // Users can update their own profile (but not change isAdmin unless authorized), admins can update all
+      allow update: if isAuth() && ((request.auth.uid == userId && (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == resource.data.isAdmin || request.auth.token.email in ['admin@shafilink.com', 'koro@shafilink.com', 'piccisarfin@gmail.com'])) || isAdmin());
       allow delete: if isAdmin();
     }
 
@@ -45,6 +48,21 @@ service cloud.firestore {
       allow create: if isAuth();
       // Only admins can update or delete transactions (approve/reject)
       allow update, delete: if isAdmin();
+    }
+
+    match /deposits/{depositId} {
+      // Users can read their own deposit requests, admins can read all
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Users can create deposit requests
+      allow create: if isAuth();
+      // Only admins can update or delete deposit requests (approve/reject)
+      allow update, delete: if isAdmin();
+    }
+
+    match /links/{linkId} {
+      allow read: if true;
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /settings/{document=**} {
