@@ -96,17 +96,8 @@ export function Profile() {
       setDepositMsg("Request submitted! Waiting for admin approval.");
       
       // Notify Admin via WhatsApp
-      if (settings?.adminWhatsappNumber) {
-        const msg = `New Deposit Request\nUser: ${user.email}\nAmount: ${settings.currencySymbol || "৳"}${amt.toFixed(2)}\nTrxID: ${trxId}`;
-        let waAdmin = settings.adminWhatsappNumber.replace(/[^\d+]/g, '');
-        if (waAdmin.startsWith('01')) waAdmin = '88' + waAdmin;
-        
-        if (!settings.telegramChatId) {
-          const waLink = `https://wa.me/${waAdmin}?text=${encodeURIComponent(msg)}`;
-          window.open(waLink, '_blank');
-        }
-      }
-
+      // Removed window.open based on user request to not redirect to WhatsApp
+      
       setDepositAmount("");
       setTrxId("");
       setTimeout(() => setShowDeposit(false), 2000);

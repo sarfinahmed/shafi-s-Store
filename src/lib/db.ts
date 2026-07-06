@@ -12,6 +12,7 @@ export interface User {
   balance?: number;
   totalSpent?: number;
   purchasedProducts?: string[];
+  premiumStatus?: "auto" | "granted" | "blocked";
 }
 
 export interface Transaction {
@@ -84,6 +85,7 @@ export interface Order {
   tutorialVideoUrl?: string;
   status?: "pending" | "completed" | "rejected" | "processing" | "success" | "failed";
   createdAt: number;
+  quantity?: number;
 }
 
 export interface PaymentMethod {
@@ -234,13 +236,13 @@ class FirebaseDatabase {
     return transactions;
   }
 
-  async purchaseProduct(userId: string, product: Product, userInput?: string, selectedOptionName?: string): Promise<Order> {
+  async purchaseProduct(userId: string, product: Product, userInput?: string, selectedOptionName?: string, quantity: number = 1): Promise<Order> {
     const userRef = doc(dbInit, "users", userId);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) throw new Error("User not found");
     const u = userSnap.data() as User;
     const balance = u.balance || 0;
-    const priceToDeduct = product.price || 0;
+    const priceToDeduct = (product.price || 0) * quantity;
     if (balance < priceToDeduct) throw new Error("Insufficient funds");
     
     // Check if it has codes
@@ -260,12 +262,12 @@ class FirebaseDatabase {
         const option = dbProduct.options.find(o => o.name === selectedOptionName);
         if (option && option.resellerProductCode) {
           resellerCodeToUse = option.resellerProductCode;
-          resellerQuantityToUse = option.resellerQuantity || 1;
+          resellerQuantityToUse = (option.resellerQuantity || 1) * quantity;
         }
       }
       if (!resellerCodeToUse && dbProduct.resellerProductCode) {
         resellerCodeToUse = dbProduct.resellerProductCode;
-        resellerQuantityToUse = dbProduct.resellerQuantity || 1;
+        resellerQuantityToUse = (dbProduct.resellerQuantity || 1) * quantity;
       }
 
       if (!resellerCodeToUse) {
@@ -273,8 +275,9 @@ class FirebaseDatabase {
         // Check for option-specific codes first
         if (selectedOptionName && dbProduct.optionCodes && dbProduct.optionCodes[selectedOptionName]?.length > 0) {
           const variantCodes = [...dbProduct.optionCodes[selectedOptionName]];
-          deliveredCode = variantCodes[0];
-          const remainingVariantCodes = variantCodes.slice(1);
+          if (variantCodes.length < quantity) throw new Error(`Only ${variantCodes.length} in stock`);
+          deliveredCode = variantCodes.slice(0, quantity).join('\n');
+          const remainingVariantCodes = variantCodes.slice(quantity);
           
           await updateDoc(productRef, {
             [`optionCodes.${selectedOptionName}`]: remainingVariantCodes
@@ -282,8 +285,9 @@ class FirebaseDatabase {
         } 
         // Fallback to generic codes
         else if (dbProduct.codes && dbProduct.codes.length > 0) {
-          deliveredCode = dbProduct.codes[0];
-          const remainingCodes = dbProduct.codes.slice(1);
+          if (dbProduct.codes.length < quantity) throw new Error(`Only ${dbProduct.codes.length} in stock`);
+          deliveredCode = dbProduct.codes.slice(0, quantity).join('\n');
+          const remainingCodes = dbProduct.codes.slice(quantity);
           await updateDoc(productRef, { codes: remainingCodes });
         } 
         // Handle stockCount decrement for options
@@ -291,11 +295,11 @@ class FirebaseDatabase {
           const optionIndex = dbProduct.options.findIndex(o => o.name === selectedOptionName);
           if (optionIndex !== -1 && dbProduct.options[optionIndex].stockCount !== undefined && dbProduct.options[optionIndex].stockCount !== null) {
             const currentStock = dbProduct.options[optionIndex].stockCount;
-            if (currentStock! <= 0) {
-               throw new Error("Product out of stock");
+            if (currentStock! < quantity) {
+               throw new Error(`Only ${currentStock} in stock`);
             }
             const updatedOptions = [...dbProduct.options];
-            updatedOptions[optionIndex].stockCount = currentStock! - 1;
+            updatedOptions[optionIndex].stockCount = currentStock! - quantity;
             await updateDoc(productRef, { options: updatedOptions });
           } else if (dbProduct.optionCodes?.[selectedOptionName] !== undefined) {
              throw new Error("Product out of stock (No codes left for this option)");
@@ -303,10 +307,10 @@ class FirebaseDatabase {
         }
         // Handle stockCount decrement for simple products
         else if (dbProduct.stockCount !== undefined && dbProduct.stockCount !== null) {
-          if (dbProduct.stockCount <= 0) {
-             throw new Error("Product out of stock");
+          if (dbProduct.stockCount < quantity) {
+             throw new Error(`Only ${dbProduct.stockCount} in stock`);
           }
-          await updateDoc(productRef, { stockCount: dbProduct.stockCount - 1 });
+          await updateDoc(productRef, { stockCount: dbProduct.stockCount - quantity });
         }
         else if (dbProduct.codes !== undefined) {
            throw new Error("Product out of stock (No codes left)");
@@ -348,7 +352,8 @@ class FirebaseDatabase {
       redeemLink: product.redeemLink,
       tutorialVideoUrl: product.tutorialVideoUrl,
       status: initialStatus,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      quantity
     };
     await setDoc(orderRef, order);
 

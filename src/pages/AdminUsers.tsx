@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import { db, User } from "../lib/db";
 import { Button, Input } from "../components/ui";
-import { Trash2, CheckCircle, ShieldAlert, Shield, Ban, Unlock, Search as SearchIcon, Plus, Minus } from "lucide-react";
+import { Trash2, CheckCircle, ShieldAlert, Shield, Ban, Unlock, Search as SearchIcon, Plus, Minus, Crown } from "lucide-react";
 
 export function AdminUsers() {
   const { user } = useAuth();
@@ -51,6 +51,14 @@ export function AdminUsers() {
     loadData();
   };
 
+  const handleCyclePremium = async (u: User) => {
+    const current = u.premiumStatus || "auto";
+    const nextStatus = current === "auto" ? "granted" : current === "granted" ? "blocked" : "auto";
+    await db.updateUser(u.id, { premiumStatus: nextStatus });
+    notify(`Premium status set to ${nextStatus}`);
+    loadData();
+  };
+
   const handleAdjustBalance = async (u: User, action: 'add' | 'deduct') => {
     let amt = parseFloat(balanceAmount);
     if (!amt || amt <= 0 || !balanceReason) {
@@ -78,7 +86,7 @@ export function AdminUsers() {
   );
 
   return (
-    <div className="space-y-6 md:space-y-8 p-4 md:p-8 max-w-5xl">
+    <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-white">Users</h1>
@@ -140,24 +148,49 @@ export function AdminUsers() {
                     <td className="px-6 py-4 font-bold text-amber-500">৳{(u.totalSpent || 0).toFixed(2)}</td>
                     <td className="px-6 py-4">
                       {u.isAdmin ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-white text-black">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-white text-black mb-1">
                           Admin
                         </span>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#111] text-zinc-500 border border-zinc-800">
-                            User
-                          </span>
-                          {u.isBanned && (
-                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-950 text-red-500 border border-red-900/50">
-                               Banned
-                             </span>
+                        <div className="flex flex-col items-start gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#111] text-zinc-500 border border-zinc-800">
+                              User
+                            </span>
+                            {u.isBanned && (
+                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-950 text-red-500 border border-red-900/50">
+                                 Banned
+                               </span>
+                            )}
+                          </div>
+                          {u.premiumStatus === "granted" && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-purple-950 text-purple-400 border border-purple-900/50">
+                              Premium: Granted
+                            </span>
+                          )}
+                          {u.premiumStatus === "blocked" && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-zinc-900 text-zinc-500 border border-zinc-800">
+                              Premium: Blocked
+                            </span>
                           )}
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                           <Button 
+                             variant="ghost" 
+                             size="sm" 
+                             onClick={() => handleCyclePremium(u)} 
+                             className={`w-10 h-10 p-0 rounded-xl ${
+                               u.premiumStatus === 'granted' ? 'text-purple-400 hover:bg-purple-950/30' : 
+                               u.premiumStatus === 'blocked' ? 'text-zinc-600 hover:bg-zinc-900' : 
+                               'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                             }`}
+                             title={`Premium Status: ${u.premiumStatus || "auto"} (Click to cycle)`}
+                           >
+                             <Crown className="w-5 h-5 mx-auto" />
+                           </Button>
                            <Button 
                              variant="ghost" 
                              size="sm" 

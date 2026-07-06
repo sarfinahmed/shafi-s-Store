@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, db } from "./db";
-import { auth } from "./firebase";
+import { auth, dbInit } from "./firebase";
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, deleteUser } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 
 interface AuthContextType {
   user: User | null;
@@ -21,16 +22,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     db.initDb();
+    let userUnsub: () => void;
+    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // Initial fetch/creation
         const u = await db.login(firebaseUser.email || "", firebaseUser.uid, firebaseUser.displayName || "");
         setUser(u);
+        
+        // Listen to changes (e.g. balance, totalSpent updates from admin or purchases)
+        userUnsub = onSnapshot(doc(dbInit, "users", firebaseUser.uid), (docSnap) => {
+          if (docSnap.exists()) {
+            setUser(docSnap.data() as User);
+          }
+        });
       } else {
+        if (userUnsub) userUnsub();
         setUser(null);
       }
       setLoading(false);
     });
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (userUnsub) userUnsub();
+    };
   }, []);
 
   const loginWithEmail = async (email: string, pass: string) => {

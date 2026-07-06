@@ -273,7 +273,7 @@ export function Admin() {
   };
 
   return (
-    <div className="space-y-6 md:space-y-8 p-4 md:p-8 max-w-5xl">
+    <div className="space-y-6 md:space-y-8">
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-[#0a0a0a] p-4 rounded-2xl border border-zinc-900">
           <div className="flex items-center gap-3 mb-2">

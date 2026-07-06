@@ -4,7 +4,9 @@ service cloud.firestore {
     
     // Function to check if the user is an admin
     function isAdmin() {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
     // Function to check if the user is authenticated
@@ -21,7 +23,9 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Users can read their own data, admins can read all
-      allow read: if isAuth() && (request.auth.uid == userId || isAdmin() || resource.data.isAdmin == true);
+      // Anyone can read admin profile data (for contact info)
+      allow read: if (resource.data.isAdmin == true) || (isAuth() && (request.auth.uid == userId || isAdmin()));
+      
       // Users can create their own profile, but cannot set isAdmin to true unless authorized
       allow create: if isAuth() && request.auth.uid == userId && (
         (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false) ||
