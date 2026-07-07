@@ -4,7 +4,7 @@ import { db, Product } from "../lib/db";
 import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
 import { Button } from "../components/ui";
-import { ArrowLeft, CheckCircle, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, Lock, Loader2, PlayCircle } from "lucide-react";
 import { motion } from "motion/react";
 
 export function ProductDetail() {
@@ -21,6 +21,32 @@ export function ProductDetail() {
   const [orderLink, setOrderLink] = useState("");
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [checkingName, setCheckingName] = useState(false);
+  const [checkedName, setCheckedName] = useState<string | null>(null);
+
+  const checkFreeFireName = async () => {
+    if (!userInput.trim()) return;
+    setCheckingName(true);
+    setCheckedName(null);
+    try {
+      const response = await fetch('/api/check-freefire-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: userInput })
+      });
+      const data = await response.json();
+      if (data.success && data.name) {
+        setCheckedName(data.name);
+      } else {
+        setCheckedName(data.name || "❌ No Profile Found");
+      }
+    } catch (error) {
+      console.error("Error checking name:", error);
+      setCheckedName("❌ Error checking name");
+    } finally {
+      setCheckingName(false);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -216,6 +242,15 @@ export function ProductDetail() {
               <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">{product.description}</p>
             </div>
           )}
+          
+          {!product.requiredUserInputLabel && product.tutorialVideoUrl && (
+            <div className="hidden md:block">
+              <a href={product.tutorialVideoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-[11px] font-bold text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-2 rounded-lg border border-amber-500/20 transition-colors w-full justify-center">
+                <PlayCircle className="w-4 h-4 mr-1.5" />
+                Watch Tutorial Video
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Right Col: Options & Purchase */}
@@ -283,20 +318,63 @@ export function ProductDetail() {
                 <div className="p-5 space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-zinc-500 mb-2">{product.requiredUserInputLabel}</label>
-                    <input 
-                      type="text" 
-                      value={userInput}
-                      onChange={(e) => setUserInput(e.target.value)}
-                      className="w-full bg-[#111] border border-zinc-800 text-white text-sm rounded-lg px-4 py-3 focus:outline-none focus:border-zinc-500 transition-colors placeholder:text-zinc-700"
-                      placeholder={`Enter ${product.requiredUserInputLabel}`}
-                    />
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={userInput}
+                        onChange={(e) => {
+                           setUserInput(e.target.value);
+                           setCheckedName(null);
+                        }}
+                        className="w-full bg-[#111] border border-zinc-800 text-white text-sm rounded-lg px-4 py-3 focus:outline-none focus:border-zinc-500 transition-colors placeholder:text-zinc-700"
+                        placeholder={`Enter ${product.requiredUserInputLabel}`}
+                      />
+                      {(product.title.toLowerCase().includes("free fire") || product.title.toLowerCase().includes("ff") || (product.requiredUserInputLabel && product.requiredUserInputLabel.toLowerCase().includes("uid"))) && (
+                        <button
+                          onClick={checkFreeFireName}
+                          disabled={checkingName || !userInput.trim()}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-zinc-700 transition-colors disabled:opacity-50 flex-shrink-0"
+                        >
+                          {checkingName ? "Checking..." : "Check Name"}
+                        </button>
+                      )}
+                    </div>
+                    {checkedName && (
+                      <div className={`text-xs font-bold mt-2 ${checkedName.includes("❌") ? 'text-red-500' : 'text-green-400'}`}>
+                        {checkedName}
+                      </div>
+                    )}
                   </div>
+                  {product.tutorialVideoUrl && (
+                    <a href={product.tutorialVideoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-[11px] font-bold text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-2 rounded-lg border border-amber-500/20 transition-colors">
+                      <PlayCircle className="w-4 h-4 mr-1.5" />
+                      How to find your {product.requiredUserInputLabel || "ID"} (Tutorial Video)
+                    </a>
+                  )}
                   {product.description && (
                     <div className="text-xs text-zinc-500 whitespace-pre-wrap md:hidden">
                        {product.description}
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Mobile Fallback Description & Tutorial (if no requiredUserInputLabel) */}
+            {!product.requiredUserInputLabel && (product.description || product.tutorialVideoUrl) && (
+              <div className="md:hidden space-y-4">
+                {product.tutorialVideoUrl && (
+                  <a href={product.tutorialVideoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-[11px] font-bold text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-2 rounded-lg border border-amber-500/20 transition-colors w-full justify-center">
+                    <PlayCircle className="w-4 h-4 mr-1.5" />
+                    Watch Tutorial Video
+                  </a>
+                )}
+                {product.description && (
+                  <div className="bg-[#0a0a0a] rounded-2xl border border-zinc-900 p-5">
+                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Product Description</h3>
+                    <p className="text-zinc-300 text-xs leading-relaxed whitespace-pre-wrap">{product.description}</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -358,14 +436,14 @@ export function ProductDetail() {
                       {!user ? (
                         <div className="flex gap-2 w-full">
                           <Link to="/login?register=true" className="flex-1">
-                            <Button className="w-full text-[10px] md:text-xs py-2 bg-zinc-100 hover:bg-white text-black font-black uppercase tracking-widest">
+                            <button className="w-full text-[10px] py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-bold uppercase tracking-widest rounded-lg border border-zinc-700 transition-colors">
                               Create Account
-                            </Button>
+                            </button>
                           </Link>
                           <Link to="/login" className="flex-1">
-                            <Button className="w-full text-[10px] md:text-xs py-2 bg-zinc-900 hover:bg-zinc-800 text-white font-black uppercase tracking-widest border border-zinc-800">
+                            <button className="w-full text-[10px] py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold uppercase tracking-widest rounded-lg border border-zinc-800 transition-colors">
                               Login
-                            </Button>
+                            </button>
                           </Link>
                         </div>
                       ) : isActuallySoldOut ? (

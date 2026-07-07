@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useConfig } from "../lib/config";
 import { useAuth } from "../lib/auth";
 import { Button, Input, Textarea } from "../components/ui";
-import { CheckCircle, Plus, Trash2 } from "lucide-react";
+import { CheckCircle, Plus, Trash2, Eye, Bell, X } from "lucide-react";
 import { PaymentMethod } from "../lib/db";
 
 export function AdminSettings() {
@@ -17,6 +17,13 @@ export function AdminSettings() {
   const [telegramChatIds, setTelegramChatIds] = useState<string[]>(
     settings?.telegramChatIds || (settings?.telegramChatId ? settings.telegramChatId.split(",").map(id => id.trim()).filter(id => id) : [])
   );
+  const [dailyPopupEnabled, setDailyPopupEnabled] = useState(settings?.dailyPopupEnabled ?? true);
+  const [dailyPopupImage, setDailyPopupImage] = useState(settings?.dailyPopupImage || "");
+  const [dailyPopupTitle, setDailyPopupTitle] = useState(settings?.dailyPopupTitle || "");
+  const [dailyPopupMessage, setDailyPopupMessage] = useState(settings?.dailyPopupMessage || "");
+  const [dailyPopupLink, setDailyPopupLink] = useState(settings?.dailyPopupLink || "");
+  const [dailyPopupLinkLabel, setDailyPopupLinkLabel] = useState(settings?.dailyPopupLinkLabel || "Join Now");
+  const [showPreview, setShowPreview] = useState(false);
   const [newChatId, setNewChatId] = useState("");
   const [noticeBanner, setNoticeBanner] = useState(settings?.noticeBanner || "");
   const [maintenanceMode, setMaintenanceMode] = useState(settings?.maintenanceMode || false);
@@ -28,6 +35,7 @@ export function AdminSettings() {
   const [unipinApiUrl, setUnipinApiUrl] = useState(settings?.unipinApiUrl || "");
   const [unipinApiKey, setUnipinApiKey] = useState(settings?.unipinApiKey || "");
   const [tutorialContent, setTutorialContent] = useState(settings?.tutorialContent || "");
+  const [tutorialVideos, setTutorialVideos] = useState<{title: string, url: string}[]>(settings?.tutorialVideos || []);
   
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState("");
@@ -50,6 +58,12 @@ export function AdminSettings() {
       currencySymbol,
       adminWhatsappNumber,
       telegramChatIds,
+      dailyPopupEnabled,
+      dailyPopupImage,
+      dailyPopupTitle,
+      dailyPopupMessage,
+      dailyPopupLink,
+      dailyPopupLinkLabel,
       noticeBanner,
       maintenanceMode,
       paymentMethods,
@@ -59,7 +73,8 @@ export function AdminSettings() {
       garenaShellApiKey,
       unipinApiUrl,
       unipinApiKey,
-      tutorialContent
+      tutorialContent,
+      tutorialVideos
     });
     setSaving(false);
     notify("Settings saved successfully");
@@ -133,6 +148,70 @@ export function AdminSettings() {
             <p className="text-xs text-zinc-500 mt-2 font-medium">Include country code (e.g., 880 for BD). Users will be redirected here after purchases or deposits.</p>
           </div>
 
+          <div className="bg-[#111] border border-zinc-800 rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold text-white">Daily Popup Configuration</h3>
+              <div className="flex items-center space-x-4">
+                <Button size="sm" variant="outline" onClick={() => setShowPreview(true)}>
+                  <Eye className="w-4 h-4 mr-2" /> Preview
+                </Button>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={dailyPopupEnabled} 
+                    onChange={e => setDailyPopupEnabled(e.target.checked)}
+                    className="rounded border-zinc-800 bg-black text-indigo-500 focus:ring-indigo-500/20"
+                  />
+                  <span className="text-xs text-zinc-300 font-medium">Enable</span>
+                </label>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Popup Image URL (Optional)</label>
+              <Input 
+                value={dailyPopupImage} 
+                onChange={e => setDailyPopupImage(e.target.value)} 
+                placeholder="e.g. https://example.com/image.png"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Popup Title</label>
+              <Input 
+                value={dailyPopupTitle} 
+                onChange={e => setDailyPopupTitle(e.target.value)} 
+                placeholder="e.g. Join Our Community"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Popup Message</label>
+              <Textarea 
+                value={dailyPopupMessage} 
+                onChange={e => setDailyPopupMessage(e.target.value)} 
+                placeholder="e.g. Get the latest updates..."
+                className="resize-none"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Button Link</label>
+                <Input 
+                  value={dailyPopupLink} 
+                  onChange={e => setDailyPopupLink(e.target.value)} 
+                  placeholder="e.g. https://t.me/channel"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Button Label</label>
+                <Input 
+                  value={dailyPopupLinkLabel} 
+                  onChange={e => setDailyPopupLinkLabel(e.target.value)} 
+                  placeholder="e.g. Join Now"
+                />
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Telegram API Chat ID(s) (Automatic Notifications)</label>
             <div className="space-y-2 mb-2">
@@ -188,6 +267,49 @@ export function AdminSettings() {
               placeholder="Write a guide for users on how to topup or redeem codes. You can use markdown."
               className="resize-none h-40"
             />
+          </div>
+
+          <div className="pt-6 border-t border-zinc-900">
+            <div className="flex items-center justify-between mb-4">
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest">Tutorial Videos</label>
+              <Button size="sm" variant="outline" onClick={() => setTutorialVideos([...tutorialVideos, { title: '', url: '' }])}>
+                <Plus className="w-4 h-4 mr-2" /> Add Video
+              </Button>
+            </div>
+            <div className="space-y-4">
+              {tutorialVideos.map((tv, i) => (
+                <div key={i} className="flex gap-4 items-start">
+                  <div className="flex-1 space-y-2">
+                    <Input 
+                      placeholder="Video Title (e.g. Free Fire Topup Tutorial)" 
+                      value={tv.title}
+                      onChange={(e) => {
+                        const next = [...tutorialVideos];
+                        next[i].title = e.target.value;
+                        setTutorialVideos(next);
+                      }}
+                    />
+                    <Input 
+                      placeholder="Video URL (e.g. https://youtube.com/...)" 
+                      value={tv.url}
+                      onChange={(e) => {
+                        const next = [...tutorialVideos];
+                        next[i].url = e.target.value;
+                        setTutorialVideos(next);
+                      }}
+                    />
+                  </div>
+                  <Button variant="ghost" className="text-red-500 hover:text-red-400 hover:bg-red-950/30 px-3 h-10 mt-1" onClick={() => {
+                    setTutorialVideos(tutorialVideos.filter((_, index) => index !== i));
+                  }}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              {tutorialVideos.length === 0 && (
+                <p className="text-zinc-500 text-sm font-medium">No tutorial videos added.</p>
+              )}
+            </div>
           </div>
 
           <label className="flex items-center space-x-3 bg-[#111] p-4 rounded-xl border border-zinc-800 cursor-pointer">
@@ -329,6 +451,57 @@ export function AdminSettings() {
           </Button>
         </div>
       </div>
+
+      {showPreview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#111] border border-zinc-800 rounded-2xl w-full max-w-[320px] md:max-w-sm overflow-hidden shadow-2xl relative">
+            <button 
+              onClick={() => setShowPreview(false)}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors z-10 bg-black/20 rounded-full p-1 backdrop-blur-md"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            {dailyPopupImage && (
+              <div className="w-full h-32 md:h-48 bg-zinc-900">
+                <img src={dailyPopupImage} alt="Popup" className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            <div className={`p-6 md:p-8 text-center flex flex-col items-center ${dailyPopupImage ? 'pt-5 md:pt-6' : ''}`}>
+              {!dailyPopupImage && (
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-indigo-500/20 text-indigo-500 rounded-full flex items-center justify-center mb-4 md:mb-6">
+                  <Bell className="w-6 h-6 md:w-8 md:h-8" />
+                </div>
+              )}
+              
+              <h2 className="text-lg md:text-xl font-bold text-white mb-2">{dailyPopupTitle || "Notice"}</h2>
+              {dailyPopupMessage && (
+                <p className="text-xs md:text-sm text-zinc-400 mb-6 md:mb-8 leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800">
+                  {dailyPopupMessage}
+                </p>
+              )}
+              
+              <div className="w-full space-y-2 md:space-y-3">
+                {dailyPopupLink && (
+                  <button 
+                    onClick={() => setShowPreview(false)}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 md:py-3.5 rounded-xl transition-colors tracking-wide text-sm md:text-base"
+                  >
+                    {dailyPopupLinkLabel || "Learn More"}
+                  </button>
+                )}
+                <button 
+                  onClick={() => setShowPreview(false)}
+                  className="w-full bg-transparent hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold py-3 md:py-3.5 rounded-xl transition-colors text-xs md:text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

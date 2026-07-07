@@ -103,6 +103,12 @@ export interface AppSettings {
   paymentMethods?: PaymentMethod[];
   telegramChatId?: string;
   telegramChatIds?: string[];
+  dailyPopupEnabled?: boolean;
+  dailyPopupImage?: string;
+  dailyPopupTitle?: string;
+  dailyPopupMessage?: string;
+  dailyPopupLink?: string;
+  dailyPopupLinkLabel?: string;
   noticeBanner?: string;
   maintenanceMode?: boolean;
   // Auto Topup APIs
@@ -113,6 +119,7 @@ export interface AppSettings {
   unipinApiUrl?: string;
   unipinApiKey?: string;
   tutorialContent?: string;
+  tutorialVideos?: { title: string; url: string }[];
 }
 
 class FirebaseDatabase {

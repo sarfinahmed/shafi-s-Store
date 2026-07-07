@@ -23,6 +23,7 @@ import { AdminTransactions } from "./pages/AdminTransactions";
 import { Contact } from "./pages/Contact";
 import { Tutorial } from "./pages/Tutorial";
 import { GlobalMaintenance } from "./components/GlobalMaintenance";
+import { DailyPopup } from "./components/DailyPopup";
 
 // Simple wrapper to ensure users only
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -59,6 +60,7 @@ export default function App() {
         <BrowserRouter>
           <PageViewTracker />
           <GlobalMaintenance />
+          <DailyPopup />
           <Routes>
             {/* User App Routes */}
             <Route element={<Layout />}>
