@@ -29,14 +29,27 @@ export function ProductDetail() {
     setCheckingName(true);
     setCheckedName(null);
     try {
-      const response = await fetch('/api/check-freefire-name', {
+      const payload = {
+        sectionName: "AllData",
+        PlayerUid: userInput.trim(),
+        region: "BD",
+        useruid: "npRhVL3REnh756zhsL1Otn1BEyi1",
+        api: settings?.freeFireApiKey || "GnNm9vQ4Zb5ZYSj2fYf2FKkxwsz0Ub"
+      };
+      
+      const apiUrl = settings?.freeFireApiUrl || "https://proapis.hlgamingofficial.com/main/games/freefire/account/api";
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid: userInput })
+        body: JSON.stringify(payload)
       });
+      
       const data = await response.json();
-      if (data.success && data.name) {
-        setCheckedName(data.name);
+      const accountName = data?.result?.AccountInfo?.AccountName;
+      
+      if (accountName) {
+        setCheckedName(accountName);
       } else {
         setCheckedName(data.name || "❌ No Profile Found");
       }
