@@ -25,37 +25,35 @@ export function ProductDetail() {
   const [checkedName, setCheckedName] = useState<string | null>(null);
 
   const checkFreeFireName = async () => {
-    if (!userInput.trim()) return;
+    const uid = userInput.trim();
+    if (!uid) return;
+    if (uid.length < 3) {
+      setCheckedName("❌ Enter a valid UID");
+      return;
+    }
+
     setCheckingName(true);
     setCheckedName(null);
     try {
-      const payload = {
-        sectionName: "AllData",
-        PlayerUid: userInput.trim(),
-        region: "BD",
-        useruid: "npRhVL3REnh756zhsL1Otn1BEyi1",
-        api: settings?.freeFireApiKey || "GnNm9vQ4Zb5ZYSj2fYf2FKkxwsz0Ub"
-      };
-      
-      const apiUrl = settings?.freeFireApiUrl || "https://proapis.hlgamingofficial.com/main/games/freefire/account/api";
+      const apiUrl = `https://api.f9bazar.com/check.php?uid=${uid}`;
 
       const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        method: 'GET'
       });
       
       const data = await response.json();
-      const accountName = data?.result?.AccountInfo?.AccountName;
       
-      if (accountName) {
-        setCheckedName(accountName);
+      if (response.ok && data?.nickname) {
+        const regionSuffix = data.region ? ` (${data.region})` : "";
+        setCheckedName(`${data.nickname}${regionSuffix}`);
+      } else if (data?.error === "ID NOT FOUND") {
+        setCheckedName("❌ UID সঠিক নয়");
       } else {
-        setCheckedName(data.name || "❌ No Profile Found");
+        setCheckedName("❌ No Profile Found");
       }
     } catch (error) {
       console.error("Error checking name:", error);
-      setCheckedName("❌ Error checking name");
+      setCheckedName("❌ API Error");
     } finally {
       setCheckingName(false);
     }

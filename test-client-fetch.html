@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+async function test() {
+      const payload = {
+        sectionName: "AllData",
+        PlayerUid: "12345678",
+        region: "BD",
+        useruid: "npRhVL3REnh756zhsL1Otn1BEyi1",
+        api: "GnNm9vQ4Zb5ZYSj2fYf2FKkxwsz0Ub"
+      };
+      
+      const apiUrl = "https://proapis.hlgamingofficial.com/main/games/freefire/account/api";
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        console.log("Success:", JSON.stringify(data));
+      } catch (e) {
+        console.error("Error:", e.message);
+      }
+}
+test();
+</script>
+</body>
+</html>
