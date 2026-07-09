@@ -136,7 +136,6 @@ export function Admin() {
         isSoldOut: newIsSoldOut,
         isPremiumOnly: newIsPremiumOnly,
         sortOrder: newSortOrder.trim() !== "" ? parseInt(newSortOrder, 10) : null,
-        codes: newCodes.split('\n').map(c => c.trim()).filter(c => c),
         optionCodes: optionCodes,
         stockCount: newStockCount.trim() !== "" ? parseInt(newStockCount, 10) : null,
         resellerProductCode: newResellerProductCode.trim(),
@@ -144,6 +143,14 @@ export function Admin() {
         redeemLink: newRedeemLink,
         tutorialVideoUrl: newTutorialVideoUrl,
       };
+      
+      if (newCodes.trim() !== "") {
+        data.codes = newCodes.split('\n').map(c => c.trim()).filter(c => c);
+      } else if (editingProduct && editingProduct.codes !== undefined && editingProduct.codes !== null) {
+        data.codes = [];
+      } else {
+        data.codes = null;
+      }
       if (newPrice.trim()) {
         data.price = parseFloat(newPrice);
       } else {
@@ -583,7 +590,7 @@ export function Admin() {
                   onChange={e => setNewIsPremiumOnly(e.target.checked)}
                   className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600 text-amber-500 focus:ring-amber-500"
                 />
-                <span className="text-amber-400 font-bold">Premium Customer Only (Requires 5000 ৳ spent)</span>
+                <span className="text-amber-400 font-bold">Premium Customer Only (Requires {settings?.premiumThreshold ?? 5000} ৳ spent)</span>
               </label>
             </div>
             <div className="flex justify-end gap-2 pt-2">

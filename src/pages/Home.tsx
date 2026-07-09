@@ -82,18 +82,17 @@ export function Home() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 ">
             {catProducts.map((product, i) => {
               const totalSpent = user?.totalSpent || 0;
-              const isLocked = product.isPremiumOnly && (user?.premiumStatus === 'blocked' ? true : user?.premiumStatus === 'granted' ? false : (totalSpent < 5000));
+              const threshold = settings?.premiumThreshold ?? 5000;
+              const isLocked = product.isPremiumOnly && (user?.premiumStatus === 'blocked' ? true : user?.premiumStatus === 'granted' ? false : (totalSpent < threshold));
               
               const { totalStock, hasUnlimited, isActuallySoldOut } = (() => {
-                if (product.isSoldOut) return { totalStock: 0, hasUnlimited: false, isActuallySoldOut: true };
-                
                 let stock = 0;
                 let unlimited = false;
                 let hasStockControl = false;
 
                 if (product.options && product.options.length > 0) {
                   product.options.forEach(opt => {
-                    if (product.optionCodes?.[opt.name] !== undefined && product.optionCodes[opt.name].length > 0) {
+                    if (product.optionCodes?.[opt.name] !== undefined) {
                       stock += product.optionCodes[opt.name].length;
                       hasStockControl = true;
                     } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
@@ -104,7 +103,7 @@ export function Home() {
                     }
                   });
                 } else {
-                  if (product.codes !== undefined && product.codes.length > 0) {
+                  if (product.codes !== undefined && product.codes !== null) {
                     stock = product.codes.length;
                     hasStockControl = true;
                   } else if (product.stockCount !== undefined && product.stockCount !== null) {
@@ -115,8 +114,7 @@ export function Home() {
                   }
                 }
 
-                const isSoldOut = !unlimited && hasStockControl && stock === 0;
-                return { totalStock: stock, hasUnlimited: unlimited, isActuallySoldOut: isSoldOut };
+                return { totalStock: stock, hasUnlimited: unlimited, isActuallySoldOut: product.isSoldOut || false };
               })();
 
               return (
@@ -128,12 +126,12 @@ export function Home() {
                 className={`group relative bg-[#0a0a0a] rounded-2xl border border-zinc-900 overflow-hidden hover:border-zinc-700 transition-all duration-300 shadow-xl ${isLocked ? 'opacity-75 grayscale' : ''}`}
               >
                 {isLocked ? (
-                  <div className="absolute inset-0 bg-black/60 z-10 flex flex-col items-center justify-center p-4 text-center pointer-events-none" title="আমাদের ওয়েবসাইট থেকে যারা ৫০০০ টাকার জিনিস কিনবে শুধু তারাই এইখান থেকে কিনতে পারবে">
+                  <div className="absolute inset-0 bg-black/60 z-10 flex flex-col items-center justify-center p-4 text-center pointer-events-none" title={`আমাদের ওয়েবসাইট থেকে যারা ${threshold} টাকার জিনিস কিনবে শুধু তারাই এইখান থেকে কিনতে পারবে`}>
                     <div className="bg-amber-500/20 p-3 rounded-full mb-2 border border-amber-500/50">
                       <Lock className="w-6 h-6 text-amber-500" />
                     </div>
                     <p className="text-[10px] md:text-xs font-bold text-amber-500 uppercase tracking-widest mt-1">Premium Customer</p>
-                    <p className="text-[8px] md:text-[9px] text-zinc-300 mt-2 font-medium">Requires 5000৳ Total Spent</p>
+                    <p className="text-[8px] md:text-[9px] text-zinc-300 mt-2 font-medium">Requires {threshold}৳ Total Spent</p>
                   </div>
                 ) : null}
 
@@ -174,17 +172,17 @@ export function Home() {
                             <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
                             <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">Sold Out</span>
                           </>
-                        ) : hasUnlimited ? (
-                          <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                            <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">In Stock</span>
-                          </>
                         ) : totalStock > 0 ? (
                           <>
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                             <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">{totalStock} Stock</span>
                           </>
-                        ) : null}
+                        ) : (
+                          <>
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                            <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">In Stock</span>
+                          </>
+                        )}
                       </div>
 
                       {product.estimatedTime && !isActuallySoldOut && (

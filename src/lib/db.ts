@@ -58,7 +58,7 @@ export interface Product {
   estimatedTime?: string;
   isActive?: boolean;
   sortOrder?: number;
-  codes?: string[]; // Generic codes
+  codes?: string[] | null; // Generic codes
   optionCodes?: Record<string, string[]>; // Codes mapped to option names (e.g., {"Weekly": ["CODE1"], "Monthly": ["CODE2"]})
   stockCount?: number | null;
   resellerProductCode?: string; // For API integration
@@ -111,6 +111,7 @@ export interface AppSettings {
   dailyPopupLinkLabel?: string;
   noticeBanner?: string;
   maintenanceMode?: boolean;
+  premiumThreshold?: number;
   // Auto Topup APIs
   freeFireApiUrl?: string;
   freeFireApiKey?: string;
@@ -319,7 +320,7 @@ class FirebaseDatabase {
           }
           await updateDoc(productRef, { stockCount: dbProduct.stockCount - quantity });
         }
-        else if (dbProduct.codes !== undefined) {
+        else if (dbProduct.codes !== undefined && dbProduct.codes !== null) {
            throw new Error("Product out of stock (No codes left)");
         }
       }

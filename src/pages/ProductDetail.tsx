@@ -90,42 +90,12 @@ export function ProductDetail() {
     );
   };
 
-  const isActuallySoldOut = (() => {
-    if (product.isSoldOut) return true;
-    
-    if (product.options && product.options.length > 0) {
-      if (selectedOptions.length > 0) {
-        let anySoldOut = false;
-        for (const optName of selectedOptions) {
-          const opt = product.options.find(o => o.name === optName);
-          if (opt?.stockCount !== undefined && opt.stockCount !== null) {
-            if (opt.stockCount < quantity) anySoldOut = true;
-          }
-        }
-        return anySoldOut;
-      } else {
-        // if no option selected, check if ALL options are sold out
-        let allSoldOut = true;
-        for (const opt of product.options) {
-          if (opt.stockCount === undefined || opt.stockCount === null || opt.stockCount >= quantity) {
-            allSoldOut = false;
-            break;
-          }
-        }
-        return allSoldOut;
-      }
-    } else {
-      if (product.stockCount !== undefined && product.stockCount !== null) {
-        return product.stockCount < quantity;
-      }
-      return false; // Unlimited
-    }
-  })();
+  const isActuallySoldOut = product.isSoldOut || false;
 
   const isLocked = product.isPremiumOnly && 
     (user?.premiumStatus === 'blocked' ? true : 
      user?.premiumStatus === 'granted' ? false :
-     ((user?.totalSpent || 0) < 5000));
+     ((user?.totalSpent || 0) < (settings?.premiumThreshold ?? 5000)));
 
   const handlePurchase = async () => {
     if (!user) {
@@ -293,8 +263,12 @@ export function ProductDetail() {
                           )}
                           {(() => {
                             let stockDisplay = null;
-                            if (product.optionCodes?.[opt.name] !== undefined && product.optionCodes[opt.name].length > 0) {
-                              stockDisplay = `${product.optionCodes[opt.name].length} In Stock`;
+                            if (product.optionCodes?.[opt.name] !== undefined) {
+                              if (product.optionCodes[opt.name].length > 0) {
+                                stockDisplay = `${product.optionCodes[opt.name].length} In Stock`;
+                              } else {
+                                stockDisplay = 'Out of Stock';
+                              }
                             } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
                               stockDisplay = opt.stockCount > 0 ? `${opt.stockCount} In Stock` : 'Out of Stock';
                             } else {
@@ -441,38 +415,40 @@ export function ProductDetail() {
                 )}
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  {((currentPrice !== undefined && currentPrice !== null) || (product.options && product.options.length > 0)) && (
+                  {!user ? (
+                    <div className="flex gap-2 w-full">
+                      <Link to="/login?register=true" className="flex-1">
+                        <button className="w-full text-[10px] py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-bold uppercase tracking-widest rounded-lg border border-zinc-700 transition-colors">
+                          Create Account
+                        </button>
+                      </Link>
+                      <Link to="/login" className="flex-1">
+                        <button className="w-full text-[10px] py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold uppercase tracking-widest rounded-lg border border-zinc-800 transition-colors">
+                          Login
+                        </button>
+                      </Link>
+                    </div>
+                  ) : (
                     <>
-                      {!user ? (
-                        <div className="flex gap-2 w-full">
-                          <Link to="/login?register=true" className="flex-1">
-                            <button className="w-full text-[10px] py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-bold uppercase tracking-widest rounded-lg border border-zinc-700 transition-colors">
-                              Create Account
-                            </button>
-                          </Link>
-                          <Link to="/login" className="flex-1">
-                            <button className="w-full text-[10px] py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold uppercase tracking-widest rounded-lg border border-zinc-800 transition-colors">
-                              Login
-                            </button>
-                          </Link>
-                        </div>
-                      ) : isActuallySoldOut ? (
-                        <Button disabled className="flex-1 text-sm py-4 bg-red-950 text-red-500 font-black uppercase tracking-widest border border-red-900/50 opacity-75 cursor-not-allowed">
-                          Sold Out
-                        </Button>
-                      ) : isLocked ? (
-                        <Button disabled className="flex-1 text-sm py-4 bg-zinc-900 text-zinc-500 font-black uppercase tracking-widest border border-zinc-800 opacity-75 cursor-not-allowed">
-                          Premium Only
-                        </Button>
-                      ) : (
-                        <Button disabled={isPurchasing} onClick={handlePurchase} className="flex-1 text-sm py-4 bg-green-600 hover:bg-green-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(34,197,94,0.2)]">
-                          {isPurchasing ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Buy Now"}
-                        </Button>
+                      {((currentPrice !== undefined && currentPrice !== null) || (product.options && product.options.length > 0)) && (
+                        <>
+                          {isActuallySoldOut ? (
+                            <Button disabled className="flex-1 text-sm py-4 bg-red-950 text-red-500 font-black uppercase tracking-widest border border-red-900/50 opacity-75 cursor-not-allowed">
+                              Sold Out
+                            </Button>
+                          ) : isLocked ? (
+                            <Button disabled className="flex-1 text-sm py-4 bg-zinc-900 text-zinc-500 font-black uppercase tracking-widest border border-zinc-800 opacity-75 cursor-not-allowed">
+                              Premium Only
+                            </Button>
+                          ) : (
+                            <Button disabled={isPurchasing} onClick={handlePurchase} className="flex-1 text-sm py-4 bg-green-600 hover:bg-green-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                              {isPurchasing ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Buy Now"}
+                            </Button>
+                          )}
+                        </>
                       )}
-                    </>
-                  )}
 
-                  {product.whatsappNumber && (
+                      {product.whatsappNumber && (
                     <Button 
                       variant="outline" 
                       disabled={isActuallySoldOut || isPurchasing || isLocked}
@@ -514,6 +490,8 @@ export function ProductDetail() {
                     >
                       {product.whatsappNumber!.includes('t.me') ? "Telegram Buy" : (product.whatsappNumber!.startsWith('http') && !product.whatsappNumber!.includes('wa.me')) ? "Order Link" : "WhatsApp Buy"}
                     </Button>
+                  )}
+                    </>
                   )}
                 </div>
               </div>

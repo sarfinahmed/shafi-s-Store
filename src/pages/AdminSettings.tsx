@@ -27,6 +27,7 @@ export function AdminSettings() {
   const [newChatId, setNewChatId] = useState("");
   const [noticeBanner, setNoticeBanner] = useState(settings?.noticeBanner || "");
   const [maintenanceMode, setMaintenanceMode] = useState(settings?.maintenanceMode || false);
+  const [premiumThreshold, setPremiumThreshold] = useState(settings?.premiumThreshold?.toString() || "5000");
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(settings?.paymentMethods || []);
   const [freeFireApiUrl, setFreeFireApiUrl] = useState(settings?.freeFireApiUrl || "");
   const [freeFireApiKey, setFreeFireApiKey] = useState(settings?.freeFireApiKey || "");
@@ -66,6 +67,7 @@ export function AdminSettings() {
       dailyPopupLinkLabel,
       noticeBanner,
       maintenanceMode,
+      premiumThreshold: premiumThreshold ? parseInt(premiumThreshold, 10) : 5000,
       paymentMethods,
       freeFireApiUrl,
       freeFireApiKey,
@@ -324,6 +326,17 @@ export function AdminSettings() {
               <span className="block text-xs text-zinc-500">Show a popup to tell users you are working on the app right now.</span>
             </div>
           </label>
+          
+          <div>
+            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Premium Threshold (৳)</label>
+            <Input 
+              type="number"
+              value={premiumThreshold} 
+              onChange={e => setPremiumThreshold(e.target.value)} 
+              placeholder="e.g. 5000"
+            />
+            <p className="text-xs text-zinc-500 mt-2 font-medium">The amount a user needs to spend to unlock premium products.</p>
+          </div>
           
           <div className="pt-6 border-t border-zinc-900">
             <div className="flex items-center justify-between mb-4">

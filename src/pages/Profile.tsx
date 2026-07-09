@@ -4,7 +4,7 @@ import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
 import { db, SocialLink, Transaction } from "../lib/db";
 import { Button, Input, Textarea } from "../components/ui";
-import { ExternalLink, Plus, Trash2, Wallet, Package, Copy, History, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { ExternalLink, Plus, Trash2, Wallet, Package, Copy, History, ArrowUpRight, ArrowDownLeft, Check } from "lucide-react";
 import { motion } from "motion/react";
 
 export function Profile() {
@@ -36,6 +36,8 @@ export function Profile() {
   const [newPlatform, setNewPlatform] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [newLogo, setNewLogo] = useState("");
+  
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const [typeFilter, setTypeFilter] = useState<"all" | "deposit" | "purchase" | "admin_deduction">("all");
   const [activeView, setActiveView] = useState<"none" | "deposits" | "spent" | "orders" | "codes">(
@@ -378,23 +380,31 @@ export function Profile() {
                           
                           {o.deliveredCode && (
                             <div className="space-y-2">
-                              {o.deliveredCode.split('\n').map((code, idx) => (
+                              {o.deliveredCode.split('\n').map((code, idx) => {
+                                const uniqueId = `${o.id}-${idx}`;
+                                return (
                                 <div key={idx} className="bg-black/50 p-2 rounded border border-green-900/30 flex items-center justify-between">
                                   <span className="font-mono text-green-400 font-bold">{code}</span>
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="h-6 w-6 p-0 text-zinc-500 hover:text-white"
+                                    className="h-6 px-2 py-0 text-zinc-500 hover:text-white flex items-center gap-1"
                                     onClick={() => {
                                       navigator.clipboard.writeText(code);
-                                      // Optional: show a small toast here if available, or just copy
+                                      setCopiedCode(uniqueId);
+                                      setTimeout(() => setCopiedCode(null), 2000);
                                     }}
                                     title="Copy Code"
                                   >
-                                    <Copy className="w-3 h-3" />
+                                    {copiedCode === uniqueId ? (
+                                      <><Check className="w-3 h-3 text-green-500" /><span className="text-[10px] text-green-500 font-bold">Copied</span></>
+                                    ) : (
+                                      <Copy className="w-3 h-3" />
+                                    )}
                                   </Button>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           )}
 
@@ -441,23 +451,31 @@ export function Profile() {
                       <div className="text-[10px] md:text-xs text-zinc-500">{new Date(o.createdAt).toLocaleString()}</div>
                     </div>
                     <div className="space-y-2 mb-2">
-                      {o.deliveredCode?.split('\n').map((code, idx) => (
+                      {o.deliveredCode?.split('\n').map((code, idx) => {
+                        const uniqueId = `big-${o.id}-${idx}`;
+                        return (
                         <div key={idx} className="bg-black/50 p-3 rounded-lg border border-green-900/30 flex items-center justify-between">
                           <span className="font-mono text-green-400 font-black text-sm tracking-wider">{code}</span>
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="h-8 px-3 text-green-400 hover:text-white bg-green-950/30 hover:bg-green-900/50"
+                            className="h-8 px-3 text-green-400 hover:text-white bg-green-950/30 hover:bg-green-900/50 flex items-center"
                             onClick={() => {
                               navigator.clipboard.writeText(code);
+                              setCopiedCode(uniqueId);
+                              setTimeout(() => setCopiedCode(null), 2000);
                             }}
                             title="Copy Code"
                           >
-                            <Copy className="w-4 h-4 mr-2" />
-                            Copy
+                            {copiedCode === uniqueId ? (
+                              <><Check className="w-4 h-4 mr-2" /> Copied</>
+                            ) : (
+                              <><Copy className="w-4 h-4 mr-2" /> Copy</>
+                            )}
                           </Button>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <div className="flex flex-wrap gap-4 mt-2">
                       {o.redeemLink && (
