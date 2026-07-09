@@ -93,38 +93,43 @@ export function Home() {
 
                 if (product.options && product.options.length > 0) {
                   product.options.forEach(opt => {
-                    if (opt.isSoldOut) return; // Skip sold out options
+                    if (opt.isSoldOut || false) return; // Skip sold out options
 
-                    if (product.optionCodes?.[opt.name] !== undefined) {
+                    const autoStatus = opt.disableAutoStockStatus !== true;
+
+                    if (autoStatus && product.optionCodes?.[opt.name] !== undefined) {
                       const count = product.optionCodes[opt.name].length;
                       stock += count;
                       if (count > 0) anyAvailable = true;
                       hasStockControl = true;
-                    } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
+                    } else if (autoStatus && opt.stockCount !== undefined && opt.stockCount !== null) {
                       stock += Math.max(0, opt.stockCount);
                       if (opt.stockCount > 0) anyAvailable = true;
                       hasStockControl = true;
                     } else {
+                      // If autoStatus is false OR no stock data, it's unlimited/available
                       unlimited = true;
                       anyAvailable = true;
                     }
                   });
                   
                   // Product is sold out if NO options are available OR the main flag is set
-                  const soldOut = product.isSoldOut || (!anyAvailable && product.options.length > 0);
+                  const soldOut = (product.isSoldOut || false) || (!anyAvailable);
                   return { totalStock: stock, hasUnlimited: unlimited, isActuallySoldOut: soldOut };
                 } else {
-                  if (product.codes !== undefined && product.codes !== null) {
+                  const autoStatus = product.disableAutoStockStatus !== true;
+
+                  if (autoStatus && product.codes !== undefined && product.codes !== null) {
                     stock = product.codes.length;
                     hasStockControl = true;
-                  } else if (product.stockCount !== undefined && product.stockCount !== null) {
+                  } else if (autoStatus && product.stockCount !== undefined && product.stockCount !== null) {
                     stock = Math.max(0, product.stockCount);
                     hasStockControl = true;
                   } else {
                     unlimited = true;
                   }
                   
-                  const soldOut = product.isSoldOut || (hasStockControl && stock <= 0);
+                  const soldOut = (product.isSoldOut || false) || (hasStockControl && stock <= 0);
                   return { totalStock: stock, hasUnlimited: unlimited, isActuallySoldOut: soldOut };
                 }
               })();

@@ -90,14 +90,48 @@ export function ProductDetail() {
 
   const toggleOption = (optName: string) => {
     const opt = product?.options?.find(o => o.name === optName);
-    if (opt?.isSoldOut) return;
+    if (opt && (opt.isSoldOut || false)) return;
     
     setSelectedOptions(prev => 
       prev.includes(optName) ? prev.filter(n => n !== optName) : [...prev, optName]
     );
   };
 
-  const isActuallySoldOut = product.isSoldOut || false;
+  const isActuallySoldOut = (() => {
+    if (!product) return false;
+    if (product.isSoldOut) return true;
+
+    if (product.options && product.options.length > 0) {
+      const anyAvailable = product.options.some(opt => {
+        if (opt.isSoldOut) return false;
+        
+        const autoStatus = opt.disableAutoStockStatus !== true;
+        if (!autoStatus) return true; // If auto is off and not manually sold out, it's available
+
+        if (product.optionCodes?.[opt.name] !== undefined) {
+          return product.optionCodes[opt.name].length > 0;
+        }
+        if (opt.stockCount !== undefined && opt.stockCount !== null) {
+          return opt.stockCount > 0;
+        }
+        return true; // Unlimited
+      });
+      return !anyAvailable;
+    } else {
+      let hasStockControl = false;
+      let stock = 0;
+      const autoStatus = product.disableAutoStockStatus !== true;
+
+      if (autoStatus && product.codes !== undefined && product.codes !== null) {
+        stock = product.codes.length;
+        hasStockControl = true;
+      } else if (autoStatus && product.stockCount !== undefined && product.stockCount !== null) {
+        stock = product.stockCount;
+        hasStockControl = true;
+      }
+      return hasStockControl && stock <= 0;
+    }
+  })();
 
   const isLocked = product.isPremiumOnly && 
     (user?.premiumStatus === 'blocked' ? true : 
@@ -105,6 +139,10 @@ export function ProductDetail() {
      ((user?.totalSpent || 0) < (settings?.premiumThreshold ?? 5000)));
 
   const handlePurchase = async () => {
+    if (isActuallySoldOut) {
+      setPurchaseError("This product is currently sold out.");
+      return;
+    }
     if (!user) {
       setPurchaseError("Please sign in to purchase.");
       return;
@@ -256,7 +294,7 @@ export function ProductDetail() {
                         key={i}
                         onClick={() => toggleOption(opt.name)}
                         className={`w-full relative overflow-hidden flex flex-col items-center justify-center p-3 md:p-4 rounded-xl border transition-all min-h-[90px] md:min-h-[100px] ${
-                          opt.isSoldOut 
+                          (opt.isSoldOut || false)
                             ? 'bg-zinc-950 border-zinc-900 opacity-60 cursor-not-allowed grayscale'
                             : selectedOptions.includes(opt.name) 
                               ? 'bg-zinc-800 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.15)] ring-1 ring-green-500/50' 
@@ -268,11 +306,13 @@ export function ProductDetail() {
                           let stockColor = "text-zinc-500";
                           let dotColor = "bg-green-500";
                           
-                          if (opt.isSoldOut) {
+                          const autoStatus = opt.disableAutoStockStatus !== true;
+
+                          if (opt.isSoldOut || false) {
                             stockDisplay = 'Sold Out';
                             stockColor = "text-red-500";
                             dotColor = "bg-red-500";
-                          } else if (product.optionCodes?.[opt.name] !== undefined) {
+                          } else if (autoStatus && product.optionCodes?.[opt.name] !== undefined) {
                             if (product.optionCodes[opt.name].length > 0) {
                               stockDisplay = `${product.optionCodes[opt.name].length} Stock`;
                               stockColor = "text-green-500";
@@ -281,7 +321,7 @@ export function ProductDetail() {
                               stockColor = "text-red-500";
                               dotColor = "bg-red-500";
                             }
-                          } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
+                          } else if (autoStatus && opt.stockCount !== undefined && opt.stockCount !== null) {
                             if (opt.stockCount > 0) {
                               stockDisplay = `${opt.stockCount} Stock`;
                               stockColor = "text-green-500";

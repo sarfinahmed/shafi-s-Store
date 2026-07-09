@@ -54,7 +54,8 @@ export interface Product {
   deliveryLink?: string;
   whatsappNumber?: string;
   isManualFulfillment?: boolean;
-  options?: { name: string; price?: number | null; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number; isSoldOut?: boolean }[];
+  disableAutoStockStatus?: boolean;
+  options?: { name: string; price?: number | null; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number; isSoldOut?: boolean; disableAutoStockStatus?: boolean }[];
   estimatedTime?: string;
   isActive?: boolean;
   sortOrder?: number;

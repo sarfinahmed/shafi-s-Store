@@ -33,9 +33,10 @@ export function Admin() {
   const [newEstimatedTime, setNewEstimatedTime] = useState("");
   const [newSortOrder, setNewSortOrder] = useState("");
   const [newIsManualFulfillment, setNewIsManualFulfillment] = useState(false);
+  const [newDisableAutoStockStatus, setNewDisableAutoStockStatus] = useState(false);
   const [newIsSoldOut, setNewIsSoldOut] = useState(false);
   const [newIsPremiumOnly, setNewIsPremiumOnly] = useState(false);
-  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string; stockCount?: string; resellerProductCode?: string; resellerQuantity?: string; isSoldOut?: boolean; showAdvanced?: boolean}[]>([]);
+  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string; stockCount?: string; resellerProductCode?: string; resellerQuantity?: string; isSoldOut?: boolean; disableAutoStockStatus?: boolean; showAdvanced?: boolean}[]>([]);
   const [newCodes, setNewCodes] = useState("");
   const [newStockCount, setNewStockCount] = useState("");
   const [newResellerProductCode, setNewResellerProductCode] = useState("");
@@ -111,6 +112,7 @@ export function Admin() {
         price: opt.price && opt.price.trim() !== "" ? parseFloat(opt.price) : null,
         stockCount: (opt.stockCount && opt.stockCount.trim() !== "") ? parseInt(opt.stockCount, 10) : null,
         isSoldOut: opt.isSoldOut || false,
+        disableAutoStockStatus: opt.disableAutoStockStatus || false,
         resellerProductCode: opt.resellerProductCode?.trim() || null,
         resellerQuantity: (opt.resellerQuantity && opt.resellerQuantity.trim() !== "") ? parseInt(opt.resellerQuantity, 10) : 1
       }));
@@ -134,6 +136,7 @@ export function Admin() {
         whatsappNumber: newWhatsappNumber,
         estimatedTime: newEstimatedTime,
         isManualFulfillment: newIsManualFulfillment,
+        disableAutoStockStatus: newDisableAutoStockStatus,
         isSoldOut: newIsSoldOut,
         isPremiumOnly: newIsPremiumOnly,
         sortOrder: newSortOrder.trim() !== "" ? parseInt(newSortOrder, 10) : null,
@@ -188,6 +191,7 @@ export function Admin() {
     setNewEstimatedTime("");
     setNewSortOrder("");
     setNewIsManualFulfillment(false);
+    setNewDisableAutoStockStatus(false);
     setNewIsSoldOut(false);
     setNewIsPremiumOnly(false);
     setNewOptionsArr([]);
@@ -213,6 +217,7 @@ export function Admin() {
     setNewEstimatedTime(product.estimatedTime || "");
     setNewSortOrder(product.sortOrder !== undefined && product.sortOrder !== null ? product.sortOrder.toString() : "");
     setNewIsManualFulfillment(product.isManualFulfillment || false);
+    setNewDisableAutoStockStatus(product.disableAutoStockStatus || false);
     setNewIsSoldOut(product.isSoldOut || false);
     setNewIsPremiumOnly(product.isPremiumOnly || false);
     setNewOptionsArr(product.options ? product.options.map(o => ({ 
@@ -220,6 +225,7 @@ export function Admin() {
       price: o.price !== undefined && o.price !== null ? o.price.toString() : "",
       stockCount: o.stockCount !== null && o.stockCount !== undefined ? o.stockCount.toString() : "",
       isSoldOut: o.isSoldOut || false,
+      disableAutoStockStatus: o.disableAutoStockStatus || false,
       codes: (product.optionCodes?.[o.name] || []).join('\n'),
       resellerProductCode: o.resellerProductCode || "",
       resellerQuantity: o.resellerQuantity !== undefined ? o.resellerQuantity.toString() : ""
@@ -530,6 +536,22 @@ export function Admin() {
                               Sold Out
                             </label>
                           </div>
+                          <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 shrink-0">
+                            <input 
+                              type="checkbox" 
+                              id={`auto-stock-${idx}`}
+                              checked={!opt.disableAutoStockStatus}
+                              onChange={e => {
+                                const updated = [...newOptionsArr];
+                                updated[idx].disableAutoStockStatus = !e.target.checked;
+                                setNewOptionsArr(updated);
+                              }}
+                              className="w-4 h-4 rounded border-zinc-800 bg-black text-blue-500 focus:ring-blue-500/20"
+                            />
+                            <label htmlFor={`auto-stock-${idx}`} className="text-[10px] font-black text-zinc-500 uppercase tracking-widest cursor-pointer select-none">
+                              Auto Stock
+                            </label>
+                          </div>
                           <Input 
                             placeholder="API Reseller Code (Optional)" 
                             value={opt.resellerProductCode || ""} 
@@ -605,6 +627,16 @@ export function Admin() {
                   className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600"
                 />
                 <span>Manual Fulfillment (Admin completes the order manually, no instant delivery)</span>
+              </label>
+
+              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-500">
+                <input 
+                  type="checkbox" 
+                  checked={!newDisableAutoStockStatus} 
+                  onChange={e => setNewDisableAutoStockStatus(!e.target.checked)}
+                  className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600 text-blue-500 focus:ring-blue-500"
+                />
+                <span className="text-blue-400 font-bold">Auto Sold Out (Based on Stock Count/Codes)</span>
               </label>
               
               <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-500">
