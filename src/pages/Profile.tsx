@@ -377,27 +377,32 @@ export function Profile() {
                           <span className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Delivery Info:</span>
                           
                           {o.deliveredCode && (
-                            <div className="bg-black/50 p-2 rounded border border-green-900/30 flex items-center justify-between">
-                              <span className="font-mono text-green-400 font-bold">{o.deliveredCode}</span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 w-6 p-0 text-zinc-500 hover:text-white"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(o.deliveredCode);
-                                  // Optional: show a small toast here if available, or just copy
-                                }}
-                                title="Copy Code"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </Button>
+                            <div className="space-y-2">
+                              {o.deliveredCode.split('\n').map((code, idx) => (
+                                <div key={idx} className="bg-black/50 p-2 rounded border border-green-900/30 flex items-center justify-between">
+                                  <span className="font-mono text-green-400 font-bold">{code}</span>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 w-6 p-0 text-zinc-500 hover:text-white"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(code);
+                                      // Optional: show a small toast here if available, or just copy
+                                    }}
+                                    title="Copy Code"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              ))}
                             </div>
                           )}
 
                           {o.redeemLink && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Redeem At:</span>
-                              <a href={o.redeemLink} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-white underline underline-offset-4">{o.redeemLink}</a>
+                            <div className="mt-3">
+                              <a href={o.redeemLink} target="_blank" rel="noreferrer" className="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white font-black py-2.5 px-4 rounded-lg text-xs uppercase tracking-widest transition-colors">
+                                Redeem Here
+                              </a>
                             </div>
                           )}
 
@@ -435,24 +440,28 @@ export function Profile() {
                       </div>
                       <div className="text-[10px] md:text-xs text-zinc-500">{new Date(o.createdAt).toLocaleString()}</div>
                     </div>
-                    <div className="bg-black/50 p-3 rounded-lg border border-green-900/30 flex items-center justify-between mb-2">
-                      <span className="font-mono text-green-400 font-black text-sm tracking-wider">{o.deliveredCode}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 px-3 text-green-400 hover:text-white bg-green-950/30 hover:bg-green-900/50"
-                        onClick={() => {
-                          navigator.clipboard.writeText(o.deliveredCode || "");
-                        }}
-                        title="Copy Code"
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copy
-                      </Button>
+                    <div className="space-y-2 mb-2">
+                      {o.deliveredCode?.split('\n').map((code, idx) => (
+                        <div key={idx} className="bg-black/50 p-3 rounded-lg border border-green-900/30 flex items-center justify-between">
+                          <span className="font-mono text-green-400 font-black text-sm tracking-wider">{code}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-3 text-green-400 hover:text-white bg-green-950/30 hover:bg-green-900/50"
+                            onClick={() => {
+                              navigator.clipboard.writeText(code);
+                            }}
+                            title="Copy Code"
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Copy
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                     <div className="flex flex-wrap gap-4 mt-2">
                       {o.redeemLink && (
-                        <a href={o.redeemLink} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:text-white font-bold uppercase tracking-widest underline underline-offset-4 flex items-center">
+                        <a href={o.redeemLink} target="_blank" rel="noreferrer" className="flex-1 text-center bg-blue-600 hover:bg-blue-500 text-white font-black py-2.5 px-4 rounded-lg text-xs uppercase tracking-widest transition-colors">
                           Redeem Here
                         </a>
                       )}

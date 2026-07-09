@@ -79,33 +79,13 @@ async function startServer() {
         return res.status(400).json({ error: "Missing uid" });
       }
 
-      const payload = {
-        sectionName: "AllData",
-        PlayerUid: uid,
-        region: "BD",
-        useruid: "npRhVL3REnh756zhsL1Otn1BEyi1",
-        api: "GnNm9vQ4Zb5ZYSj2fYf2FKkxwsz0Ub"
-      };
-
-      const response = await fetch("https://proapis.hlgamingofficial.com/main/games/freefire/account/api", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-
+      const response = await fetch(`https://apis.rrrtopup.com/api/v1/player-nickname?id=${uid}&product_id=21`);
       const data = await response.json();
-      
-      try {
-        const accountName = data?.result?.AccountInfo?.AccountName;
-        if (accountName) {
-           return res.json({ success: true, name: accountName });
-        } else {
-           return res.json({ success: false, name: "❌ No Profile Found" });
-        }
-      } catch (e) {
-        return res.json({ success: false, name: "❌ No Profile Found" });
+
+      if (response.ok && data?.success) {
+        return res.json({ success: true, name: data.data.nickname });
+      } else {
+        return res.json({ success: false, name: "❌ আপনার Uid ভুল" });
       }
     } catch (error: any) {
       console.error("Error checking Free Fire name:", error);

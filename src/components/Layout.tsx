@@ -19,6 +19,7 @@ export function Layout() {
           <Link to="/" className="text-xl md:text-2xl font-black tracking-tighter text-white flex items-center gap-2 md:gap-3">
             {settings?.appName || "Loading..."}
           </Link>
+
           <nav className="hidden md:flex items-center gap-4 font-semibold">
             <Link to="/">
               <Button variant="ghost" className={`px-4 ${isActive('/') ? 'text-white bg-zinc-900' : 'text-zinc-500 hover:text-white hover:bg-zinc-900'}`}>

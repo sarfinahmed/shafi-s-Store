@@ -430,7 +430,7 @@ export function Admin() {
               <Input type="number" placeholder="Order Priority (1 = top, empty = bottom)" value={newSortOrder} onChange={e => setNewSortOrder(e.target.value)} />
               <Input type="number" placeholder="Stock Count (Empty = Unlimited)" value={newStockCount} onChange={e => setNewStockCount(e.target.value)} />
               <Input placeholder="Delivery Link (given after purchase)" value={newDeliveryLink} onChange={e => setNewDeliveryLink(e.target.value)} />
-              <Input placeholder="Specific WhatsApp (e.g. 88017XX)" value={newWhatsappNumber} onChange={e => setNewWhatsappNumber(e.target.value)} />
+              <Input placeholder="Social Media Link (WhatsApp, Telegram, URL)" value={newWhatsappNumber} onChange={e => setNewWhatsappNumber(e.target.value)} />
               <Textarea placeholder="Description" className="md:col-span-2 whitespace-pre-wrap" value={newDesc} onChange={e => setNewDesc(e.target.value)} />
               
               <div className="md:col-span-2 grid grid-cols-2 gap-4">

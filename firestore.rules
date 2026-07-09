@@ -17,8 +17,10 @@ service cloud.firestore {
     match /products/{productId} {
       // Anyone can read products
       allow read: if true;
-      // Only admins can create, update, or delete products
-      allow write: if isAdmin();
+      // Users can update products (to reduce stock when buying)
+      allow update: if isAuth();
+      // Only admins can create or delete products
+      allow create, delete: if isAdmin();
     }
 
     match /users/{userId} {
@@ -41,8 +43,10 @@ service cloud.firestore {
       allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
       // Users can create orders, admins can create orders
       allow create: if isAuth();
-      // Only admins can update or delete orders
-      allow update, delete: if isAdmin();
+      // Users can update their own orders (e.g. for status changes after reseller API call)
+      allow update: if isAdmin() || (isAuth() && resource.data.userId == request.auth.uid);
+      // Only admins can delete orders
+      allow delete: if isAdmin();
     }
 
     match /transactions/{transactionId} {

@@ -35,21 +35,20 @@ export function ProductDetail() {
     setCheckingName(true);
     setCheckedName(null);
     try {
-      const apiUrl = `https://api.f9bazar.com/check.php?uid=${uid}`;
-
-      const response = await fetch(apiUrl, {
-        method: 'GET'
+      const response = await fetch('/api/check-freefire-name', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ uid })
       });
       
       const data = await response.json();
       
-      if (response.ok && data?.nickname) {
-        const regionSuffix = data.region ? ` (${data.region})` : "";
-        setCheckedName(`${data.nickname}${regionSuffix}`);
-      } else if (data?.error === "ID NOT FOUND") {
-        setCheckedName("❌ UID সঠিক নয়");
+      if (response.ok && data?.success) {
+        setCheckedName(data.name);
       } else {
-        setCheckedName("❌ No Profile Found");
+        setCheckedName(data.name || "❌ API Error");
       }
     } catch (error) {
       console.error("Error checking name:", error);
@@ -483,17 +482,37 @@ export function ProductDetail() {
                           return;
                         }
                         setPurchaseError("");
-                        let num = product.whatsappNumber!.replace(/[^\d+]/g, '');
-                        if (num.startsWith('01')) {
-                          num = '88' + num;
-                        }
+                        
                         const priceText = currentPrice !== undefined && currentPrice !== null ? `\nPrice: ${settings?.currencySymbol || "৳"}${(currentPrice * quantity).toFixed(2)}\nQuantity: ${quantity}` : '';
                         const msg = `Hello! I would like to instantly buy:\n*${currentTitle}*${priceText}${userInput ? `\n\n${product.requiredUserInputLabel}: ${userInput}` : ''}`;
-                        window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+                        
+                        const link = product.whatsappNumber!;
+                        
+                        if (link.startsWith('http') || link.startsWith('https://')) {
+                          if (link.includes('t.me')) {
+                            window.open(`${link}?text=${encodeURIComponent(msg)}`, '_blank');
+                          } else if (link.includes('wa.me')) {
+                            window.open(`${link}?text=${encodeURIComponent(msg)}`, '_blank');
+                          } else {
+                            window.open(link, '_blank');
+                          }
+                        } else {
+                          let num = link.replace(/[^\d+]/g, '');
+                          if (num.startsWith('01')) {
+                            num = '88' + num;
+                          }
+                          window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+                        }
                       }}
-                      className="flex-1 text-sm py-4 border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10 font-bold uppercase tracking-widest"
+                      className={`flex-1 text-sm py-4 font-bold uppercase tracking-widest ${
+                        product.whatsappNumber!.includes('t.me') 
+                          ? 'border-[#0088cc]/30 text-[#0088cc] hover:bg-[#0088cc]/10' 
+                          : (!product.whatsappNumber!.startsWith('http') || product.whatsappNumber!.includes('wa.me')) 
+                            ? 'border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10' 
+                            : 'border-zinc-500/30 text-zinc-300 hover:bg-zinc-800'
+                      }`}
                     >
-                      WhatsApp Buy
+                      {product.whatsappNumber!.includes('t.me') ? "Telegram Buy" : (product.whatsappNumber!.startsWith('http') && !product.whatsappNumber!.includes('wa.me')) ? "Order Link" : "WhatsApp Buy"}
                     </Button>
                   )}
                 </div>
