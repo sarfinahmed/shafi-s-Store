@@ -40,7 +40,11 @@ export function ProductDetail() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ uid })
+        body: JSON.stringify({ 
+          uid,
+          apiUrl: settings?.freeFireApiUrl,
+          apiKey: settings?.freeFireApiKey
+        })
       });
       
       const data = await response.json();
@@ -85,6 +89,9 @@ export function ProductDetail() {
     : product.title;
 
   const toggleOption = (optName: string) => {
+    const opt = product?.options?.find(o => o.name === optName);
+    if (opt?.isSoldOut) return;
+    
     setSelectedOptions(prev => 
       prev.includes(optName) ? prev.filter(n => n !== optName) : [...prev, optName]
     );
@@ -248,40 +255,63 @@ export function ProductDetail() {
                       <button
                         key={i}
                         onClick={() => toggleOption(opt.name)}
-                        className={`w-full overflow-hidden flex flex-col items-center justify-center p-3 md:p-4 rounded-xl border transition-all min-h-[90px] md:min-h-[100px] ${
-                          selectedOptions.includes(opt.name) 
-                            ? 'bg-zinc-800 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.15)] ring-1 ring-green-500/50' 
-                            : 'bg-[#111] border-zinc-800 hover:border-zinc-500 hover:bg-zinc-900'
+                        className={`w-full relative overflow-hidden flex flex-col items-center justify-center p-3 md:p-4 rounded-xl border transition-all min-h-[90px] md:min-h-[100px] ${
+                          opt.isSoldOut 
+                            ? 'bg-zinc-950 border-zinc-900 opacity-60 cursor-not-allowed grayscale'
+                            : selectedOptions.includes(opt.name) 
+                              ? 'bg-zinc-800 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.15)] ring-1 ring-green-500/50' 
+                              : 'bg-[#111] border-zinc-800 hover:border-zinc-500 hover:bg-zinc-900'
                         }`}
                       >
-                        <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wide text-center mb-1 leading-tight line-clamp-2 ${selectedOptions.includes(opt.name) ? 'text-white' : 'text-zinc-300'}`}>{opt.name}</span>
+                        {(() => {
+                          let stockDisplay = null;
+                          let stockColor = "text-zinc-500";
+                          let dotColor = "bg-green-500";
+                          
+                          if (opt.isSoldOut) {
+                            stockDisplay = 'Sold Out';
+                            stockColor = "text-red-500";
+                            dotColor = "bg-red-500";
+                          } else if (product.optionCodes?.[opt.name] !== undefined) {
+                            if (product.optionCodes[opt.name].length > 0) {
+                              stockDisplay = `${product.optionCodes[opt.name].length} Stock`;
+                              stockColor = "text-green-500";
+                            } else {
+                              stockDisplay = 'Sold Out';
+                              stockColor = "text-red-500";
+                              dotColor = "bg-red-500";
+                            }
+                          } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
+                            if (opt.stockCount > 0) {
+                              stockDisplay = `${opt.stockCount} Stock`;
+                              stockColor = "text-green-500";
+                            } else {
+                              stockDisplay = 'Sold Out';
+                              stockColor = "text-red-500";
+                              dotColor = "bg-red-500";
+                            }
+                          } else {
+                            stockDisplay = 'In Stock';
+                            stockColor = "text-zinc-400";
+                          }
+
+                          return (
+                            <div className="absolute top-1.5 right-1.5 flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded-md border border-white/5">
+                              <div className={`w-1 h-1 rounded-full ${dotColor} ${stockDisplay !== 'Sold Out' ? 'animate-pulse' : ''}`}></div>
+                              <span className={`text-[7px] font-black uppercase tracking-tighter ${stockColor}`}>
+                                {stockDisplay}
+                              </span>
+                            </div>
+                          );
+                        })()}
+
+                        <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wide text-center mb-1 leading-tight line-clamp-2 mt-2 ${selectedOptions.includes(opt.name) ? 'text-white' : 'text-zinc-300'}`}>{opt.name}</span>
                         <div className="flex flex-col items-center">
                           {opt.price !== undefined && opt.price !== null && (
                             <span className={`text-xs md:text-sm font-black ${selectedOptions.includes(opt.name) ? 'text-green-400' : 'text-orange-400'}`}>
                               {settings?.currencySymbol || "BDT"} {opt.price.toFixed(0)}
                             </span>
                           )}
-                          {(() => {
-                            let stockDisplay = null;
-                            if (product.optionCodes?.[opt.name] !== undefined) {
-                              if (product.optionCodes[opt.name].length > 0) {
-                                stockDisplay = `${product.optionCodes[opt.name].length} In Stock`;
-                              } else {
-                                stockDisplay = 'Out of Stock';
-                              }
-                            } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
-                              stockDisplay = opt.stockCount > 0 ? `${opt.stockCount} In Stock` : 'Out of Stock';
-                            } else {
-                              stockDisplay = 'Unlimited';
-                            }
-                            return (
-                              <span className={`text-[9px] mt-1 font-bold tracking-widest uppercase ${
-                                stockDisplay === 'Out of Stock' ? 'text-red-500' : 'text-zinc-500'
-                              }`}>
-                                {stockDisplay}
-                              </span>
-                            );
-                          })()}
                         </div>
                       </button>
                     ))}

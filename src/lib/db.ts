@@ -54,7 +54,7 @@ export interface Product {
   deliveryLink?: string;
   whatsappNumber?: string;
   isManualFulfillment?: boolean;
-  options?: { name: string; price?: number | null; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number }[];
+  options?: { name: string; price?: number | null; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number; isSoldOut?: boolean }[];
   estimatedTime?: string;
   isActive?: boolean;
   sortOrder?: number;
@@ -268,6 +268,8 @@ class FirebaseDatabase {
       
       if (selectedOptionName && dbProduct.options) {
         const option = dbProduct.options.find(o => o.name === selectedOptionName);
+        if (option?.isSoldOut) throw new Error("This package is currently sold out.");
+        
         if (option && option.resellerProductCode) {
           resellerCodeToUse = option.resellerProductCode;
           resellerQuantityToUse = (option.resellerQuantity || 1) * quantity;
@@ -354,11 +356,11 @@ class FirebaseDatabase {
       productTitle: product.title,
       price: priceToDeduct,
       userInput: userInput || "",
-      selectedOptionName,
+      selectedOptionName: selectedOptionName || null,
       deliveryLink: product.isManualFulfillment && !deliveredCode ? "" : (product.deliveryLink || ""),
-      deliveredCode,
-      redeemLink: product.redeemLink,
-      tutorialVideoUrl: product.tutorialVideoUrl,
+      deliveredCode: deliveredCode || null,
+      redeemLink: product.redeemLink || null,
+      tutorialVideoUrl: product.tutorialVideoUrl || null,
       status: initialStatus,
       createdAt: Date.now(),
       quantity

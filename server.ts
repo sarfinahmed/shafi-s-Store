@@ -74,16 +74,46 @@ async function startServer() {
   // Vite middleware for development
   app.post("/api/check-freefire-name", async (req, res) => {
     try {
-      const { uid } = req.body;
+      const { uid, apiUrl, apiKey } = req.body;
       if (!uid) {
         return res.status(400).json({ error: "Missing uid" });
       }
 
-      const response = await fetch(`https://apis.rrrtopup.com/api/v1/player-nickname?id=${uid}&product_id=21`);
+      let fetchUrl = `https://apis.rrrtopup.com/api/v1/player-nickname?id=${uid}&product_id=21`;
+      let headers: any = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Referer': 'https://apis.rrrtopup.com/'
+      };
+
+      if (apiUrl) {
+        // Replace {uid} or {id} in the custom URL if it's templated, or just append it
+        if (apiUrl.includes('{uid}')) {
+          fetchUrl = apiUrl.replace('{uid}', uid);
+        } else if (apiUrl.includes('{id}')) {
+          fetchUrl = apiUrl.replace('{id}', uid);
+        } else {
+          // If no template, try to append it or use it as is if it already has parameters
+          fetchUrl = apiUrl.includes('?') ? `${apiUrl}&uid=${uid}` : `${apiUrl}?uid=${uid}`;
+        }
+        
+        headers = {
+          'Accept': 'application/json'
+        };
+        if (apiKey) {
+          headers['Authorization'] = `Bearer ${apiKey}`;
+          headers['X-Api-Key'] = apiKey; // Just send it in both common places
+        }
+      }
+
+      const response = await fetch(fetchUrl, { headers });
       const data = await response.json();
 
       if (response.ok && data?.success) {
-        return res.json({ success: true, name: data.data.nickname });
+        // Different APIs return the name in different fields, let's try to find it
+        let name = data.name || data.nickname || (data.data && (data.data.nickname || data.data.name)) || data.player_name;
+        if (!name) name = "Valid ID (Name hidden)";
+        return res.json({ success: true, name: name });
       } else {
         return res.json({ success: false, name: "❌ আপনার Uid ভুল" });
       }

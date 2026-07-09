@@ -89,19 +89,30 @@ export function Home() {
                 let stock = 0;
                 let unlimited = false;
                 let hasStockControl = false;
+                let anyAvailable = false;
 
                 if (product.options && product.options.length > 0) {
                   product.options.forEach(opt => {
+                    if (opt.isSoldOut) return; // Skip sold out options
+
                     if (product.optionCodes?.[opt.name] !== undefined) {
-                      stock += product.optionCodes[opt.name].length;
+                      const count = product.optionCodes[opt.name].length;
+                      stock += count;
+                      if (count > 0) anyAvailable = true;
                       hasStockControl = true;
                     } else if (opt.stockCount !== undefined && opt.stockCount !== null) {
                       stock += Math.max(0, opt.stockCount);
+                      if (opt.stockCount > 0) anyAvailable = true;
                       hasStockControl = true;
                     } else {
                       unlimited = true;
+                      anyAvailable = true;
                     }
                   });
+                  
+                  // Product is sold out if NO options are available OR the main flag is set
+                  const soldOut = product.isSoldOut || (!anyAvailable && product.options.length > 0);
+                  return { totalStock: stock, hasUnlimited: unlimited, isActuallySoldOut: soldOut };
                 } else {
                   if (product.codes !== undefined && product.codes !== null) {
                     stock = product.codes.length;
@@ -112,9 +123,10 @@ export function Home() {
                   } else {
                     unlimited = true;
                   }
+                  
+                  const soldOut = product.isSoldOut || (hasStockControl && stock <= 0);
+                  return { totalStock: stock, hasUnlimited: unlimited, isActuallySoldOut: soldOut };
                 }
-
-                return { totalStock: stock, hasUnlimited: unlimited, isActuallySoldOut: product.isSoldOut || false };
               })();
 
               return (

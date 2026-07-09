@@ -35,7 +35,7 @@ export function Admin() {
   const [newIsManualFulfillment, setNewIsManualFulfillment] = useState(false);
   const [newIsSoldOut, setNewIsSoldOut] = useState(false);
   const [newIsPremiumOnly, setNewIsPremiumOnly] = useState(false);
-  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string; stockCount?: string; resellerProductCode?: string; resellerQuantity?: string}[]>([]);
+  const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string; stockCount?: string; resellerProductCode?: string; resellerQuantity?: string; isSoldOut?: boolean; showAdvanced?: boolean}[]>([]);
   const [newCodes, setNewCodes] = useState("");
   const [newStockCount, setNewStockCount] = useState("");
   const [newResellerProductCode, setNewResellerProductCode] = useState("");
@@ -109,9 +109,10 @@ export function Admin() {
       parsedOptions = validOptions.map(opt => ({
         name: opt.name.trim(),
         price: opt.price && opt.price.trim() !== "" ? parseFloat(opt.price) : null,
-        stockCount: opt.stockCount && opt.stockCount.trim() !== "" ? parseInt(opt.stockCount, 10) : null,
-        resellerProductCode: opt.resellerProductCode?.trim(),
-        resellerQuantity: opt.resellerQuantity && opt.resellerQuantity.trim() !== "" ? parseInt(opt.resellerQuantity, 10) : 1
+        stockCount: (opt.stockCount && opt.stockCount.trim() !== "") ? parseInt(opt.stockCount, 10) : null,
+        isSoldOut: opt.isSoldOut || false,
+        resellerProductCode: opt.resellerProductCode?.trim() || null,
+        resellerQuantity: (opt.resellerQuantity && opt.resellerQuantity.trim() !== "") ? parseInt(opt.resellerQuantity, 10) : 1
       }));
       
       validOptions.forEach(opt => {
@@ -218,6 +219,7 @@ export function Admin() {
       name: o.name, 
       price: o.price !== undefined && o.price !== null ? o.price.toString() : "",
       stockCount: o.stockCount !== null && o.stockCount !== undefined ? o.stockCount.toString() : "",
+      isSoldOut: o.isSoldOut || false,
       codes: (product.optionCodes?.[o.name] || []).join('\n'),
       resellerProductCode: o.resellerProductCode || "",
       resellerQuantity: o.resellerQuantity !== undefined ? o.resellerQuantity.toString() : ""
@@ -455,7 +457,7 @@ export function Admin() {
                   <p className="text-xs text-zinc-500 font-medium">Leave empty for a single-item product.</p>
                 )}
                 {newOptionsArr.map((opt, idx) => (
-                  <div key={idx} className="space-y-2 bg-black/40 p-4 rounded-xl border border-zinc-800">
+                  <div key={idx} className="space-y-3 bg-black/40 p-4 rounded-xl border border-zinc-800">
                     <div className="flex gap-2 items-center">
                       <Input 
                         placeholder="Package Name (e.g. Weekly)" 
@@ -476,16 +478,17 @@ export function Admin() {
                           setNewOptionsArr(updated);
                         }} 
                       />
-                      <Input 
-                        type="number" 
-                        placeholder="Stock (Empty = Unlimited)" 
-                        value={opt.stockCount || ""} 
-                        onChange={e => {
+                      <Button 
+                        variant="ghost" 
+                        className="text-zinc-500 hover:text-white px-3"
+                        onClick={() => {
                           const updated = [...newOptionsArr];
-                          updated[idx].stockCount = e.target.value;
+                          updated[idx].showAdvanced = !updated[idx].showAdvanced;
                           setNewOptionsArr(updated);
-                        }} 
-                      />
+                        }}
+                      >
+                        {opt.showAdvanced ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
                       <Button 
                         variant="ghost" 
                         className="text-red-500 hover:text-red-400 hover:bg-red-950/30 px-3"
@@ -497,42 +500,73 @@ export function Admin() {
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                    <div className="flex gap-2 items-center mt-2">
-                      <Input 
-                        placeholder="API Reseller Code (Optional)" 
-                        value={opt.resellerProductCode || ""} 
-                        onChange={e => {
-                          const updated = [...newOptionsArr];
-                          updated[idx].resellerProductCode = e.target.value;
-                          setNewOptionsArr(updated);
-                        }} 
-                      />
-                      <Input 
-                        type="number" 
-                        placeholder="API Quantity (e.g. 1)" 
-                        value={opt.resellerQuantity || ""} 
-                        onChange={e => {
-                          const updated = [...newOptionsArr];
-                          updated[idx].resellerQuantity = e.target.value;
-                          setNewOptionsArr(updated);
-                        }} 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5 ml-1">
-                        Codes for {opt.name || 'this package'} ({opt.codes.split('\n').filter(c => c.trim()).length} in stock)
-                      </label>
-                      <Textarea 
-                        placeholder="Enter codes for this option (one per line)..." 
-                        className="text-xs h-20 bg-zinc-950 border-zinc-800"
-                        value={opt.codes}
-                        onChange={e => {
-                          const updated = [...newOptionsArr];
-                          updated[idx].codes = e.target.value;
-                          setNewOptionsArr(updated);
-                        }}
-                      />
-                    </div>
+
+                    {opt.showAdvanced && (
+                      <div className="space-y-3 pt-2 border-t border-zinc-800/50">
+                        <div className="flex gap-2 items-center">
+                          <Input 
+                            type="number" 
+                            placeholder="Stock (Empty = Unlimited)" 
+                            value={opt.stockCount || ""} 
+                            onChange={e => {
+                              const updated = [...newOptionsArr];
+                              updated[idx].stockCount = e.target.value;
+                              setNewOptionsArr(updated);
+                            }} 
+                          />
+                          <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 shrink-0">
+                            <input 
+                              type="checkbox" 
+                              id={`soldout-${idx}`}
+                              checked={opt.isSoldOut || false}
+                              onChange={e => {
+                                const updated = [...newOptionsArr];
+                                updated[idx].isSoldOut = e.target.checked;
+                                setNewOptionsArr(updated);
+                              }}
+                              className="w-4 h-4 rounded border-zinc-800 bg-black text-green-500 focus:ring-green-500/20"
+                            />
+                            <label htmlFor={`soldout-${idx}`} className="text-[10px] font-black text-zinc-500 uppercase tracking-widest cursor-pointer select-none">
+                              Sold Out
+                            </label>
+                          </div>
+                          <Input 
+                            placeholder="API Reseller Code (Optional)" 
+                            value={opt.resellerProductCode || ""} 
+                            onChange={e => {
+                              const updated = [...newOptionsArr];
+                              updated[idx].resellerProductCode = e.target.value;
+                              setNewOptionsArr(updated);
+                            }} 
+                          />
+                          <Input 
+                            type="number" 
+                            placeholder="API Quantity (e.g. 1)" 
+                            value={opt.resellerQuantity || ""} 
+                            onChange={e => {
+                              const updated = [...newOptionsArr];
+                              updated[idx].resellerQuantity = e.target.value;
+                              setNewOptionsArr(updated);
+                            }} 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5 ml-1">
+                            Codes for {opt.name || 'this package'} ({(opt.codes || '').split('\n').filter(c => c.trim()).length} in stock)
+                          </label>
+                          <Textarea 
+                            placeholder="Enter codes for this option (one per line)..." 
+                            className="text-xs h-20 bg-zinc-950 border-zinc-800"
+                            value={opt.codes}
+                            onChange={e => {
+                              const updated = [...newOptionsArr];
+                              updated[idx].codes = e.target.value;
+                              setNewOptionsArr(updated);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
