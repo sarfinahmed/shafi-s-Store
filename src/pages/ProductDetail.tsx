@@ -52,11 +52,12 @@ export function ProductDetail() {
       if (response.ok && data?.success) {
         setCheckedName(data.name);
       } else {
-        setCheckedName(data.name || "❌ API Error");
+        console.warn("Name check failed:", data);
+        setCheckedName(data.name || data.error || "❌ API Error");
       }
     } catch (error) {
       console.error("Error checking name:", error);
-      setCheckedName("❌ API Error");
+      setCheckedName("❌ Network Error (Check Console)");
     } finally {
       setCheckingName(false);
     }

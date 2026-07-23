@@ -106,20 +106,48 @@ async function startServer() {
         }
       }
 
-      const response = await fetch(fetchUrl, { headers });
-      const data = await response.json();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-      if (response.ok && data?.success) {
-        // Different APIs return the name in different fields, let's try to find it
-        let name = data.name || data.nickname || (data.data && (data.data.nickname || data.data.name)) || data.player_name;
-        if (!name) name = "Valid ID (Name hidden)";
-        return res.json({ success: true, name: name });
-      } else {
-        return res.json({ success: false, name: "❌ আপনার Uid ভুল" });
+      try {
+        const response = await fetch(fetchUrl, { 
+          headers,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        const text = await response.text();
+        
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error("Failed to parse API response as JSON:", text);
+          return res.status(500).json({ success: false, name: "❌ Server Error: Invalid API response" });
+        }
+
+        if (response.ok && (data?.success || data?.status === "success" || data?.player_name || data?.nickname)) {
+          // Different APIs return the name in different fields, let's try to find it
+          let name = data.name || data.nickname || (data.data && (data.data.nickname || data.data.name)) || data.player_name || data.nickname;
+          if (!name && data.success) name = "Valid ID (Name hidden)";
+          
+          if (name) {
+            return res.json({ success: true, name: name });
+          }
+        }
+        
+        console.warn("API check failed or name not found:", data);
+        return res.json({ success: false, name: data?.message || data?.error || "❌ আপনার Uid ভুল" });
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          return res.status(504).json({ success: false, name: "❌ API Timeout" });
+        }
+        throw err;
       }
     } catch (error: any) {
       console.error("Error checking Free Fire name:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ error: "Internal server error", message: error.message });
     }
   });
 

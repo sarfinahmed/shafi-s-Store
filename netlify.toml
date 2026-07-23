@@ -1,0 +1,16 @@
+# This file is for Netlify deployment.
+# Note: This application is built as a full-stack Express app.
+# Netlify is a static host and will NOT run server.ts by default.
+# To make this work on Netlify, you would need to convert server.ts 
+# into Netlify Functions or deploy the server separately (e.g., to Railway or Cloud Run)
+# and proxy the requests here.
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/server/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
