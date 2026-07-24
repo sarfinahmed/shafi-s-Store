@@ -121,12 +121,14 @@ app.post("/api/reseller/order", async (req, res) => {
       try {
         new URL(fetchUrl);
       } catch (e) {
-        console.warn("Invalid constructed fetch URL:", fetchUrl);
-        return res.status(400).json({ success: false, name: "❌ Invalid constructed API URL" });
+        console.error("Invalid constructed fetch URL:", fetchUrl);
+        return res.status(400).json({ success: false, name: "❌ Invalid API URL Configuration" });
       }
 
+      console.log(`Checking Free Fire name for UID: ${uid} via ${fetchUrl}`);
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // Increased to 12s
 
       try {
         const response = await fetch(fetchUrl, { 
@@ -135,18 +137,25 @@ app.post("/api/reseller/order", async (req, res) => {
         });
         clearTimeout(timeoutId);
         
+        const contentType = response.headers.get("content-type");
         const text = await response.text();
+        
+        console.log(`API Response Status: ${response.status}, Content-Type: ${contentType}`);
         
         let data;
         try {
           data = JSON.parse(text);
         } catch (e) {
-          console.error("Failed to parse API response as JSON:", text);
-          return res.status(500).json({ success: false, name: "❌ Server Error: Invalid API response" });
+          console.error("Failed to parse API response as JSON. Raw response:", text);
+          // If it's not JSON, maybe it's just the name as plain text?
+          if (response.ok && text && text.length < 50 && !text.includes('<html')) {
+             return res.json({ success: true, name: text.trim() });
+          }
+          return res.status(500).json({ success: false, name: "❌ Server Error: Invalid API response format" });
         }
 
-        if (response.ok && (data?.success || data?.status === "success" || data?.player_name || data?.nickname || (data?.data && data.data.nickname))) {
-          // Different APIs return the name in different fields, let's try to find it
+        if (response.ok && (data?.success || data?.status === "success" || data?.player_name || data?.nickname || data?.name || (data?.data && (data.data.nickname || data.data.name)))) {
+          // Different APIs return the name in different fields
           let name = data.name || data.nickname || data.player_name || (data.data && (data.data.nickname || data.data.name));
           
           if (!name && data.success) name = "Valid ID (Name hidden)";
@@ -156,29 +165,31 @@ app.post("/api/reseller/order", async (req, res) => {
           }
         }
         
-        console.warn("API check failed or name not found:", data);
-        return res.json({ success: false, name: data?.message || data?.error || "❌ আপনার Uid ভুল" });
+        console.warn("API check failed or name not found in data:", data);
+        const errorMsg = data?.message || data?.error || data?.data?.message || "❌ আপনার Uid ভুল";
+        return res.status(response.ok ? 200 : response.status).json({ success: false, name: errorMsg });
       } catch (err: any) {
         clearTimeout(timeoutId);
+        console.error("Fetch error during name check:", err);
         if (err.name === 'AbortError') {
-          return res.status(504).json({ success: false, name: "❌ API Timeout" });
+          return res.status(504).json({ success: false, name: "❌ API Timeout (Slow response)" });
         }
-        throw err;
+        return res.status(500).json({ success: false, name: `❌ Network Error: ${err.message}` });
       }
     } catch (error: any) {
-      console.error("Error checking Free Fire name:", error);
-      res.status(500).json({ error: "Internal server error", message: error.message });
+      console.error("Critical error in check-freefire-name route:", error);
+      res.status(500).json({ success: false, name: "❌ Internal Server Error", message: error.message });
     }
   });
 
 (async () => {
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !process.env.NETLIFY) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
+  } else if (!process.env.NETLIFY) {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
@@ -186,7 +197,9 @@ app.post("/api/reseller/order", async (req, res) => {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  if (!process.env.NETLIFY) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 })();

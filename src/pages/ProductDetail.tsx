@@ -49,17 +49,27 @@ export function ProductDetail() {
         })
       });
       
-      const data = await response.json();
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        console.warn("Expected JSON but got:", text);
+        setCheckedName(response.ok ? text : `❌ Server Error (${response.status})`);
+        return;
+      }
       
       if (response.ok && data?.success) {
         setCheckedName(data.name);
       } else {
         console.warn("Name check failed:", data);
-        setCheckedName(data.name || data.error || "❌ API Error");
+        setCheckedName(data.name || data.error || data.message || "❌ API Error");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking name:", error);
-      setCheckedName("❌ Network Error (Check Console)");
+      setCheckedName(`❌ Network Error: ${error.message || "Connection failed"}`);
     } finally {
       setCheckingName(false);
     }
