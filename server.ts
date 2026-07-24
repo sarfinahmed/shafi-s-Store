@@ -79,106 +79,63 @@ app.post("/api/reseller/order", async (req, res) => {
   // Vite middleware for development
   app.post("/api/check-freefire-name", async (req, res) => {
     try {
-      const { uid, apiUrl, apiKey } = req.body;
+      const { uid } = req.body;
       if (!uid) {
         return res.status(400).json({ error: "Missing uid" });
       }
 
-      let fetchUrl = `https://apis.rrrtopup.com/api/v1/player-nickname?id=${uid}&product_id=21`;
-      let headers: any = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://apis.rrrtopup.com/'
-      };
-
-      if (apiUrl) {
-        // Basic validation for apiUrl
-        if (!apiUrl.startsWith('http')) {
-          console.warn("Invalid API URL provided:", apiUrl);
-          return res.status(400).json({ success: false, name: "❌ Invalid API URL configured" });
-        }
-
-        // Replace {uid} or {id} in the custom URL if it's templated, or just append it
-        if (apiUrl.includes('{uid}')) {
-          fetchUrl = apiUrl.replace('{uid}', uid);
-        } else if (apiUrl.includes('{id}')) {
-          fetchUrl = apiUrl.replace('{id}', uid);
-        } else {
-          // If no template, try to append it or use it as is if it already has parameters
-          fetchUrl = apiUrl.includes('?') ? `${apiUrl}&uid=${uid}` : `${apiUrl}?uid=${uid}`;
-        }
-        
-        headers = {
-          'Accept': 'application/json'
-        };
-        if (apiKey) {
-          headers['Authorization'] = `Bearer ${apiKey}`;
-          headers['X-Api-Key'] = apiKey; // Just send it in both common places
-        }
-      }
-
-      // Final check for fetchUrl validity
-      try {
-        new URL(fetchUrl);
-      } catch (e) {
-        console.error("Invalid constructed fetch URL:", fetchUrl);
-        return res.status(400).json({ success: false, name: "❌ Invalid API URL Configuration" });
+      // Use the provided API as default, or allow override via ENV
+      let configUrl = process.env.FREEFIRE_CHECK_URL || "https://apis.rrrtopup.com/api/v1/player-nickname?id={uid}&product_id=21";
+      
+      let fetchUrl = configUrl.replace('{uid}', uid).replace('{id}', uid);
+      
+      // If the URL doesn't have placeholders, append the ID
+      if (fetchUrl === configUrl) {
+        fetchUrl = configUrl.includes('?') ? `${configUrl}&id=${uid}` : `${configUrl}?id=${uid}`;
       }
 
       console.log(`Checking Free Fire name for UID: ${uid} via ${fetchUrl}`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000); // Increased to 12s
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
 
       try {
         const response = await fetch(fetchUrl, { 
-          headers,
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          },
           signal: controller.signal
         });
         clearTimeout(timeoutId);
         
-        const contentType = response.headers.get("content-type");
         const text = await response.text();
-        
-        console.log(`API Response Status: ${response.status}, Content-Type: ${contentType}`);
-        
         let data;
         try {
           data = JSON.parse(text);
         } catch (e) {
-          console.error("Failed to parse API response as JSON. Raw response:", text);
-          // If it's not JSON, maybe it's just the name as plain text?
           if (response.ok && text && text.length < 50 && !text.includes('<html')) {
              return res.json({ success: true, name: text.trim() });
           }
-          return res.status(500).json({ success: false, name: "❌ Server Error: Invalid API response format" });
+          return res.status(500).json({ success: false, name: "❌ Server Error: Invalid API response" });
         }
 
-        if (response.ok && (data?.success || data?.status === "success" || data?.player_name || data?.nickname || data?.name || (data?.data && (data.data.nickname || data.data.name)))) {
-          // Different APIs return the name in different fields
-          let name = data.name || data.nickname || data.player_name || (data.data && (data.data.nickname || data.data.name));
-          
-          if (!name && data.success) name = "Valid ID (Name hidden)";
-          
-          if (name) {
-            return res.json({ success: true, name: name });
-          }
+        // Check various common fields for nickname
+        const name = data.nickname || data.name || data.player_name || data.player_nickname || (data.data && (data.data.nickname || data.data.name));
+        
+        if (response.ok && (data.success || data.status === "success" || name)) {
+          return res.json({ success: true, name: name || "Valid ID" });
         }
         
-        console.warn("API check failed or name not found in data:", data);
-        const errorMsg = data?.message || data?.error || data?.data?.message || "❌ আপনার Uid ভুল";
+        const errorMsg = data.message || data.error || "❌ আপনার Uid ভুল";
         return res.status(response.ok ? 200 : response.status).json({ success: false, name: errorMsg });
       } catch (err: any) {
         clearTimeout(timeoutId);
-        console.error("Fetch error during name check:", err);
-        if (err.name === 'AbortError') {
-          return res.status(504).json({ success: false, name: "❌ API Timeout (Slow response)" });
-        }
+        if (err.name === 'AbortError') return res.status(504).json({ success: false, name: "❌ API Timeout" });
         return res.status(500).json({ success: false, name: `❌ Network Error: ${err.message}` });
       }
     } catch (error: any) {
-      console.error("Critical error in check-freefire-name route:", error);
-      res.status(500).json({ success: false, name: "❌ Internal Server Error", message: error.message });
+      res.status(500).json({ success: false, name: "❌ Internal Error" });
     }
   });
 
