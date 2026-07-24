@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { db, Order } from "../lib/db";
 import { useConfig } from "../lib/config";
 import { Button, Input } from "../components/ui";
@@ -13,15 +13,12 @@ export function AdminOrders() {
   const [actionLinkId, setActionLinkId] = useState<string | null>(null);
   const [actionLinkInput, setActionLinkInput] = useState("");
 
-  const loadData = async () => {
-    setLoading(true);
-    const o = await db.getOrders();
-    setOrders(o);
-    setLoading(false);
-  };
-
   useEffect(() => {
-    loadData();
+    const unsub = db.subscribeToOrders((o) => {
+      setOrders(o);
+      setLoading(false);
+    });
+    return () => unsub();
   }, []);
 
   const handleUpdateStatus = async (order: Order, status: "completed" | "rejected" | "success" | "failed") => {
@@ -32,7 +29,6 @@ export function AdminOrders() {
     } else {
       await db.updateOrderStatus(order.id, status);
     }
-    loadData();
   };
 
   const handleExportCSV = () => {
@@ -60,16 +56,18 @@ export function AdminOrders() {
     document.body.removeChild(link);
   };
 
-  const filteredOrders = orders.filter(o => {
-    const matchesSearch = 
-      o.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      o.productTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (o.userInput || "").toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || (o.status || "completed") === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredOrders = useMemo(() => {
+    return orders.filter(o => {
+      const matchesSearch = 
+        o.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        o.productTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (o.userInput || "").toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || (o.status || "completed") === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [orders, searchQuery, statusFilter]);
 
   return (
     <div className="space-y-6 md:space-y-8">

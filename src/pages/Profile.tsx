@@ -45,13 +45,26 @@ export function Profile() {
   );
 
   useEffect(() => {
-    if (user && user.isAdmin) {
+    if (!user) return;
+
+    if (user.isAdmin) {
       db.getLinks(user.id).then(setLinks);
-    }
-    if (user && !user.isAdmin) {
-      db.getUserDepositRequests(user.id).then(setDeposits);
-      db.getUserOrders(user.id).then(setOrders);
-      db.getTransactions(user.id).then(setTransactions);
+    } else {
+      const unsubDeposits = db.subscribeToDepositRequests((d) => {
+        setDeposits(d.filter(item => item.userId === user.id));
+      });
+      const unsubOrders = db.subscribeToOrders((o) => {
+        setOrders(o.filter(item => item.userId === user.id));
+      });
+      const unsubTransactions = db.subscribeToTransactions(user.id, (t) => {
+        setTransactions(t);
+      });
+
+      return () => {
+        unsubDeposits();
+        unsubOrders();
+        unsubTransactions();
+      };
     }
   }, [user]);
 

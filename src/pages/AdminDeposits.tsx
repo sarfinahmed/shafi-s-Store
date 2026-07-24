@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { db, DepositRequest } from "../lib/db";
 import { useConfig } from "../lib/config";
 import { Button, Input } from "../components/ui";
@@ -10,19 +10,19 @@ export function AdminDeposits() {
   const [notification, setNotification] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
-
-  const loadDeposits = () => {
-    db.getDepositRequests().then(setDeposits);
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDeposits();
+    const unsub = db.subscribeToDepositRequests((d) => {
+      setDeposits(d);
+      setLoading(false);
+    });
+    return () => unsub();
   }, []);
 
   const handleAction = async (id: string, action: "approved" | "rejected") => {
     try {
       await db.updateDepositRequestStatus(id, action);
-      loadDeposits();
       setNotification(`Deposit request ${action} successfully.`);
       setTimeout(() => setNotification(""), 3000);
     } catch (e: any) {
@@ -30,16 +30,18 @@ export function AdminDeposits() {
     }
   };
 
-  const filteredDeposits = deposits.filter(d => {
-    const matchesSearch = 
-      d.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      d.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.trxId.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || d.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  }).sort((a, b) => b.createdAt - a.createdAt);
+  const filteredDeposits = useMemo(() => {
+    return deposits.filter(d => {
+      const matchesSearch = 
+        d.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        d.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        d.trxId.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || d.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [deposits, searchQuery, statusFilter]);
 
   return (
     <div className="space-y-6 md:space-y-8">

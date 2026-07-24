@@ -34,6 +34,7 @@ export function Admin() {
   const [newSortOrder, setNewSortOrder] = useState("");
   const [newIsManualFulfillment, setNewIsManualFulfillment] = useState(false);
   const [newDisableAutoStockStatus, setNewDisableAutoStockStatus] = useState(false);
+  const [newIsInstantPayEnabled, setNewIsInstantPayEnabled] = useState(false);
   const [newIsSoldOut, setNewIsSoldOut] = useState(false);
   const [newIsPremiumOnly, setNewIsPremiumOnly] = useState(false);
   const [newOptionsArr, setNewOptionsArr] = useState<{name: string; price: string; codes: string; stockCount?: string; resellerProductCode?: string; resellerQuantity?: string; isSoldOut?: boolean; disableAutoStockStatus?: boolean; showAdvanced?: boolean}[]>([]);
@@ -137,6 +138,7 @@ export function Admin() {
         estimatedTime: newEstimatedTime,
         isManualFulfillment: newIsManualFulfillment,
         disableAutoStockStatus: newDisableAutoStockStatus,
+        isInstantPayEnabled: newIsInstantPayEnabled,
         isSoldOut: newIsSoldOut,
         isPremiumOnly: newIsPremiumOnly,
         sortOrder: newSortOrder.trim() !== "" ? parseInt(newSortOrder, 10) : null,
@@ -192,6 +194,7 @@ export function Admin() {
     setNewSortOrder("");
     setNewIsManualFulfillment(false);
     setNewDisableAutoStockStatus(false);
+    setNewIsInstantPayEnabled(false);
     setNewIsSoldOut(false);
     setNewIsPremiumOnly(false);
     setNewOptionsArr([]);
@@ -218,6 +221,7 @@ export function Admin() {
     setNewSortOrder(product.sortOrder !== undefined && product.sortOrder !== null ? product.sortOrder.toString() : "");
     setNewIsManualFulfillment(product.isManualFulfillment || false);
     setNewDisableAutoStockStatus(product.disableAutoStockStatus || false);
+    setNewIsInstantPayEnabled(product.isInstantPayEnabled || false);
     setNewIsSoldOut(product.isSoldOut || false);
     setNewIsPremiumOnly(product.isPremiumOnly || false);
     setNewOptionsArr(product.options ? product.options.map(o => ({ 
@@ -637,6 +641,16 @@ export function Admin() {
                   className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600 text-blue-500 focus:ring-blue-500"
                 />
                 <span className="text-blue-400 font-bold">Auto Sold Out (Based on Stock Count/Codes)</span>
+              </label>
+
+              <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-500">
+                <input 
+                  type="checkbox" 
+                  checked={newIsInstantPayEnabled} 
+                  onChange={e => setNewIsInstantPayEnabled(e.target.checked)}
+                  className="w-4 h-4 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600 text-blue-500 focus:ring-blue-500"
+                />
+                <span className="text-green-400 font-bold italic underline decoration-green-900 underline-offset-4">ENABLE INSTANT PAY (Manual Transaction)</span>
               </label>
               
               <label className="md:col-span-2 flex items-center space-x-3 text-sm text-zinc-500">

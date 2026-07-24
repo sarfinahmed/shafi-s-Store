@@ -2,14 +2,13 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+export const app = express();
+const PORT = 3000;
 
-  app.use(express.json());
+app.use(express.json());
 
-  // Reseller API proxy endpoint
-  app.post("/api/reseller/order", async (req, res) => {
+// Reseller API proxy endpoint
+app.post("/api/reseller/order", async (req, res) => {
     try {
       const { uid, productCode, quantity } = req.body;
 
@@ -22,9 +21,15 @@ async function startServer() {
 
       if (!apiUrl || !apiKey) {
         console.error("Reseller API credentials not configured.");
-        // We still return success to the client if API is not configured so it doesn't crash, 
-        // or we return a specific error so the admin knows.
         return res.status(500).json({ error: "Reseller API not configured on server." });
+      }
+
+      // Validate URL
+      try {
+        new URL(apiUrl);
+      } catch (e) {
+        console.error("Invalid RESELLER_API_URL configured:", apiUrl);
+        return res.status(500).json({ error: "Invalid Reseller API URL configured on server." });
       }
 
       console.log(`Sending order to Reseller API. ProductCode: ${productCode}, UID: ${uid}, Quantity: ${quantity}`);
@@ -87,6 +92,12 @@ async function startServer() {
       };
 
       if (apiUrl) {
+        // Basic validation for apiUrl
+        if (!apiUrl.startsWith('http')) {
+          console.warn("Invalid API URL provided:", apiUrl);
+          return res.status(400).json({ success: false, name: "❌ Invalid API URL configured" });
+        }
+
         // Replace {uid} or {id} in the custom URL if it's templated, or just append it
         if (apiUrl.includes('{uid}')) {
           fetchUrl = apiUrl.replace('{uid}', uid);
@@ -104,6 +115,14 @@ async function startServer() {
           headers['Authorization'] = `Bearer ${apiKey}`;
           headers['X-Api-Key'] = apiKey; // Just send it in both common places
         }
+      }
+
+      // Final check for fetchUrl validity
+      try {
+        new URL(fetchUrl);
+      } catch (e) {
+        console.warn("Invalid constructed fetch URL:", fetchUrl);
+        return res.status(400).json({ success: false, name: "❌ Invalid constructed API URL" });
       }
 
       const controller = new AbortController();
@@ -126,9 +145,10 @@ async function startServer() {
           return res.status(500).json({ success: false, name: "❌ Server Error: Invalid API response" });
         }
 
-        if (response.ok && (data?.success || data?.status === "success" || data?.player_name || data?.nickname)) {
+        if (response.ok && (data?.success || data?.status === "success" || data?.player_name || data?.nickname || (data?.data && data.data.nickname))) {
           // Different APIs return the name in different fields, let's try to find it
-          let name = data.name || data.nickname || (data.data && (data.data.nickname || data.data.name)) || data.player_name || data.nickname;
+          let name = data.name || data.nickname || data.player_name || (data.data && (data.data.nickname || data.data.name));
+          
           if (!name && data.success) name = "Valid ID (Name hidden)";
           
           if (name) {
@@ -151,6 +171,7 @@ async function startServer() {
     }
   });
 
+(async () => {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -168,6 +189,4 @@ async function startServer() {
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
-}
-
-startServer();
+})();

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../lib/auth";
 import { db, User } from "../lib/db";
 import { Button, Input } from "../components/ui";
@@ -13,14 +13,12 @@ export function AdminUsers() {
   const [adjustUserId, setAdjustUserId] = useState<string | null>(null);
   const [notification, setNotification] = useState("");
 
-  const loadData = async () => {
-    const u = await db.getAllUsers();
-    setUsers(u);
-  };
-
   useEffect(() => {
     if (user?.isAdmin) {
-      loadData();
+      const unsub = db.subscribeToUsers((u) => {
+        setUsers(u);
+      });
+      return () => unsub();
     }
   }, [user]);
 
@@ -36,19 +34,16 @@ export function AdminUsers() {
   const handleDeleteUser = async (id: string) => {
     await db.deleteUser(id);
     notify("User removed");
-    loadData();
   };
 
   const handleToggleBan = async (id: string, currentStatus: boolean) => {
     await db.updateUser(id, { isBanned: !currentStatus });
     notify(currentStatus ? "User unbanned" : "User banned");
-    loadData();
   };
 
   const handleToggleAdmin = async (id: string, currentStatus: boolean) => {
     await db.updateUser(id, { isAdmin: !currentStatus });
     notify(currentStatus ? "Admin rights revoked" : "User is now an admin");
-    loadData();
   };
 
   const handleCyclePremium = async (u: User) => {
@@ -56,7 +51,6 @@ export function AdminUsers() {
     const nextStatus = current === "auto" ? "granted" : current === "granted" ? "blocked" : "auto";
     await db.updateUser(u.id, { premiumStatus: nextStatus });
     notify(`Premium status set to ${nextStatus}`);
-    loadData();
   };
 
   const handleAdjustBalance = async (u: User, action: 'add' | 'deduct') => {
@@ -76,14 +70,15 @@ export function AdminUsers() {
     setBalanceAmount("");
     setBalanceReason("");
     notify(`Balance updated for ${u.email}`);
-    loadData();
   };
 
-  const filteredUsers = users.filter(u => 
-    u.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (u.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => 
+      u.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (u.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.id.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [users, searchQuery]);
 
   return (
     <div className="space-y-6 md:space-y-8">

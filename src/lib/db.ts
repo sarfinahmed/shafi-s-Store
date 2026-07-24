@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { dbInit } from "./firebase";
 
 export interface User {
@@ -55,6 +55,7 @@ export interface Product {
   whatsappNumber?: string;
   isManualFulfillment?: boolean;
   disableAutoStockStatus?: boolean;
+  isInstantPayEnabled?: boolean;
   options?: { name: string; price?: number | null; stockCount?: number | null; resellerProductCode?: string; resellerQuantity?: number; isSoldOut?: boolean; disableAutoStockStatus?: boolean }[];
   estimatedTime?: string;
   isActive?: boolean;
@@ -85,6 +86,8 @@ export interface Order {
   redeemLink?: string;
   tutorialVideoUrl?: string;
   status?: "pending" | "completed" | "rejected" | "processing" | "success" | "failed";
+  paymentMethod?: string;
+  transactionId?: string;
   createdAt: number;
   quantity?: number;
 }
@@ -101,6 +104,8 @@ export interface AppSettings {
   heroSubtitle: string;
   currencySymbol?: string;
   adminWhatsappNumber?: string;
+  bkashNumber?: string;
+  nagadNumber?: string;
   paymentMethods?: PaymentMethod[];
   telegramChatId?: string;
   telegramChatIds?: string[];
@@ -245,6 +250,16 @@ class FirebaseDatabase {
     return transactions;
   }
 
+  subscribeToTransactions(userId: string, callback: (transactions: Transaction[]) => void): () => void {
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const q = query(collection(dbInit, "transactions"), where("userId", "==", userId), where("createdAt", ">=", oneMonthAgo), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snap) => {
+      callback(snap.docs.map(d => d.data() as Transaction));
+    }, (error) => {
+      console.error("Transactions subscription error:", error);
+    });
+  }
+
   async purchaseProduct(userId: string, product: Product, userInput?: string, selectedOptionName?: string, quantity: number = 1): Promise<Order> {
     const userRef = doc(dbInit, "users", userId);
     const userSnap = await getDoc(userRef);
@@ -252,6 +267,7 @@ class FirebaseDatabase {
     const u = userSnap.data() as User;
     const balance = u.balance || 0;
     const priceToDeduct = (product.price || 0) * quantity;
+    
     if (balance < priceToDeduct) throw new Error("Insufficient funds");
     
     // Check if it has codes
@@ -341,6 +357,7 @@ class FirebaseDatabase {
     
     // Determine initial status
     let initialStatus: "pending" | "completed" | "processing" | "failed" = "pending";
+    
     if (resellerCodeToUse) {
       initialStatus = "processing";
     } else if (deliveredCode) {
@@ -363,6 +380,8 @@ class FirebaseDatabase {
       redeemLink: product.redeemLink || null,
       tutorialVideoUrl: product.tutorialVideoUrl || null,
       status: initialStatus,
+      paymentMethod: "wallet",
+      transactionId: null,
       createdAt: Date.now(),
       quantity
     };
@@ -438,6 +457,16 @@ class FirebaseDatabase {
     return snap.docs.map(d => d.data() as Order);
   }
 
+  subscribeToOrders(callback: (orders: Order[]) => void): () => void {
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const q = query(collection(dbInit, "orders"), where("createdAt", ">=", oneMonthAgo), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snap) => {
+      callback(snap.docs.map(d => d.data() as Order));
+    }, (error) => {
+      console.error("Orders subscription error:", error);
+    });
+  }
+
   async getUserOrders(userId: string): Promise<Order[]> {
     const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const q = query(collection(dbInit, "orders"), where("userId", "==", userId));
@@ -494,6 +523,16 @@ class FirebaseDatabase {
     return deposits.sort((a, b) => b.createdAt - a.createdAt);
   }
 
+  subscribeToDepositRequests(callback: (deposits: DepositRequest[]) => void): () => void {
+    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const q = query(collection(dbInit, "deposits"), where("createdAt", ">=", oneMonthAgo), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snap) => {
+      callback(snap.docs.map(d => d.data() as DepositRequest));
+    }, (error) => {
+      console.error("Deposits subscription error:", error);
+    });
+  }
+
   async getUserDepositRequests(userId: string): Promise<DepositRequest[]> {
     const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const q = query(collection(dbInit, "deposits"), where("userId", "==", userId));
@@ -521,6 +560,15 @@ class FirebaseDatabase {
     const q = collection(dbInit, "users");
     const snap = await getDocs(q);
     return snap.docs.map(d => d.data() as User);
+  }
+
+  subscribeToUsers(callback: (users: User[]) => void): () => void {
+    const q = collection(dbInit, "users");
+    return onSnapshot(q, (snap) => {
+      callback(snap.docs.map(d => d.data() as User));
+    }, (error) => {
+      console.error("Users subscription error:", error);
+    });
   }
 
   async getAdminUsers(): Promise<User[]> {
@@ -579,6 +627,22 @@ class FirebaseDatabase {
       const orderB = b.sortOrder ?? 999999;
       if (orderA !== orderB) return orderA - orderB;
       return b.createdAt - a.createdAt;
+    });
+  }
+
+  subscribeToProducts(callback: (products: Product[]) => void): () => void {
+    const q = query(collection(dbInit, "products"));
+    return onSnapshot(q, (snap) => {
+      const products = snap.docs.map(d => d.data() as Product);
+      const sorted = products.sort((a, b) => {
+        const orderA = a.sortOrder ?? 999999;
+        const orderB = b.sortOrder ?? 999999;
+        if (orderA !== orderB) return orderA - orderB;
+        return b.createdAt - a.createdAt;
+      });
+      callback(sorted);
+    }, (error) => {
+      console.error("Products subscription error:", error);
     });
   }
 

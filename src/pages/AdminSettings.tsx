@@ -14,6 +14,8 @@ export function AdminSettings() {
   const [heroSubtitle, setHeroSubtitle] = useState(settings?.heroSubtitle || "");
   const [currencySymbol, setCurrencySymbol] = useState(settings?.currencySymbol || "৳");
   const [adminWhatsappNumber, setAdminWhatsappNumber] = useState(settings?.adminWhatsappNumber || "");
+  const [bkashNumber, setBkashNumber] = useState(settings?.bkashNumber || "");
+  const [nagadNumber, setNagadNumber] = useState(settings?.nagadNumber || "");
   const [telegramChatIds, setTelegramChatIds] = useState<string[]>(
     settings?.telegramChatIds || (settings?.telegramChatId ? settings.telegramChatId.split(",").map(id => id.trim()).filter(id => id) : [])
   );
@@ -58,6 +60,8 @@ export function AdminSettings() {
       heroSubtitle,
       currencySymbol,
       adminWhatsappNumber,
+      bkashNumber,
+      nagadNumber,
       telegramChatIds,
       dailyPopupEnabled,
       dailyPopupImage,
@@ -148,6 +152,25 @@ export function AdminSettings() {
               placeholder="e.g. 8801700000000"
             />
             <p className="text-xs text-zinc-500 mt-2 font-medium">Include country code (e.g., 880 for BD). Users will be redirected here after purchases or deposits.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">bKash Number (For Instant Pay)</label>
+              <Input 
+                value={bkashNumber} 
+                onChange={e => setBkashNumber(e.target.value)} 
+                placeholder="e.g. 017XXXXXXXX"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Nagad Number (For Instant Pay)</label>
+              <Input 
+                value={nagadNumber} 
+                onChange={e => setNagadNumber(e.target.value)} 
+                placeholder="e.g. 018XXXXXXXX"
+              />
+            </div>
           </div>
 
           <div className="bg-[#111] border border-zinc-800 rounded-xl p-5 space-y-4">

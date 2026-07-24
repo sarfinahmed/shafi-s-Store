@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { db, Product } from "../lib/db";
+import { dbInit } from "../lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 import { useAuth } from "../lib/auth";
 import { useConfig } from "../lib/config";
 import { Button } from "../components/ui";
-import { ArrowLeft, CheckCircle, Lock, Loader2, PlayCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Lock, Loader2, PlayCircle, CreditCard, Wallet, Zap, Copy } from "lucide-react";
 import { motion } from "motion/react";
 
 export function ProductDetail() {
@@ -64,41 +66,42 @@ export function ProductDetail() {
   };
 
   useEffect(() => {
-    if (id) {
-      db.getProduct(id).then(res => {
-        setProduct(res);
-        setLoading(false);
-      });
-    }
+    if (!id) return;
+    
+    setLoading(true);
+    const unsub = onSnapshot(doc(dbInit, "products", id), (docSnap) => {
+      if (docSnap.exists()) {
+        setProduct(docSnap.data() as Product);
+      } else {
+        setProduct(null);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching product:", error);
+      setLoading(false);
+    });
+    
+    return () => unsub();
   }, [id]);
 
-  if (loading) return <div className="text-center py-20 text-zinc-500 font-medium">Loading premium product...</div>;
-  if (!product) return <div className="text-center py-20 text-red-500 font-bold">Product not found.</div>;
-  if (product.isActive === false && !user?.isAdmin) {
-    return <div className="text-center py-20 text-zinc-500 font-bold">This product is currently unavailable.</div>;
-  }
+  const currentPrice = useMemo(() => {
+    if (!product) return 0;
+    return product.options && product.options.length > 0
+      ? selectedOptions.reduce((sum, name) => {
+          const opt = product.options!.find(o => o.name === name);
+          return sum + (opt?.price || 0);
+        }, 0)
+      : product.price || 0;
+  }, [product, selectedOptions]);
 
-  const currentPrice = product.options && product.options.length > 0
-    ? selectedOptions.reduce((sum, name) => {
-        const opt = product.options!.find(o => o.name === name);
-        return sum + (opt?.price || 0);
-      }, 0)
-    : product.price;
+  const currentTitle = useMemo(() => {
+    if (!product) return "";
+    return selectedOptions.length > 0 
+      ? `${product.title} - ${selectedOptions.join(", ")}` 
+      : product.title;
+  }, [product, selectedOptions]);
 
-  const currentTitle = selectedOptions.length > 0 
-    ? `${product.title} - ${selectedOptions.join(", ")}` 
-    : product.title;
-
-  const toggleOption = (optName: string) => {
-    const opt = product?.options?.find(o => o.name === optName);
-    if (opt && (opt.isSoldOut || false)) return;
-    
-    setSelectedOptions(prev => 
-      prev.includes(optName) ? prev.filter(n => n !== optName) : [...prev, optName]
-    );
-  };
-
-  const isActuallySoldOut = (() => {
+  const isActuallySoldOut = useMemo(() => {
     if (!product) return false;
     if (product.isSoldOut) return true;
 
@@ -107,7 +110,7 @@ export function ProductDetail() {
         if (opt.isSoldOut) return false;
         
         const autoStatus = opt.disableAutoStockStatus !== true;
-        if (!autoStatus) return true; // If auto is off and not manually sold out, it's available
+        if (!autoStatus) return true; 
 
         if (product.optionCodes?.[opt.name] !== undefined) {
           return product.optionCodes[opt.name].length > 0;
@@ -115,7 +118,7 @@ export function ProductDetail() {
         if (opt.stockCount !== undefined && opt.stockCount !== null) {
           return opt.stockCount > 0;
         }
-        return true; // Unlimited
+        return true; 
       });
       return !anyAvailable;
     } else {
@@ -132,12 +135,30 @@ export function ProductDetail() {
       }
       return hasStockControl && stock <= 0;
     }
-  })();
+  }, [product]);
 
-  const isLocked = product.isPremiumOnly && 
-    (user?.premiumStatus === 'blocked' ? true : 
-     user?.premiumStatus === 'granted' ? false :
-     ((user?.totalSpent || 0) < (settings?.premiumThreshold ?? 5000)));
+  const isLocked = useMemo(() => {
+    if (!product) return false;
+    return product.isPremiumOnly && 
+      (user?.premiumStatus === 'blocked' ? true : 
+       user?.premiumStatus === 'granted' ? false :
+       ((user?.totalSpent || 0) < (settings?.premiumThreshold ?? 5000)));
+  }, [product, user, settings]);
+
+  if (loading) return <div className="text-center py-20 text-zinc-500 font-medium">Loading premium product...</div>;
+  if (!product) return <div className="text-center py-20 text-red-500 font-bold">Product not found.</div>;
+  if (product.isActive === false && !user?.isAdmin) {
+    return <div className="text-center py-20 text-zinc-500 font-bold">This product is currently unavailable.</div>;
+  }
+
+  const toggleOption = (optName: string) => {
+    const opt = product?.options?.find(o => o.name === optName);
+    if (opt && (opt.isSoldOut || false)) return;
+    
+    setSelectedOptions(prev => 
+      prev.includes(optName) ? prev.filter(n => n !== optName) : [...prev, optName]
+    );
+  };
 
   const handlePurchase = async () => {
     if (isActuallySoldOut) {
@@ -203,7 +224,7 @@ export function ProductDetail() {
           setOrderLink(lastLink);
         }
       } else {
-        const productToBuy = { ...product, price: product.price, title: product.title };
+        const productToBuy = { ...product, price: currentPrice ?? 0, title: product.title };
         const order = await db.purchaseProduct(user.id, productToBuy, userInput, undefined, quantity);
         if (order.deliveredCode) {
           navigate("/profile?view=codes");
@@ -520,48 +541,25 @@ export function ProductDetail() {
                       )}
 
                       {product.whatsappNumber && (
-                    <Button 
-                      variant="outline" 
-                      disabled={isActuallySoldOut || isPurchasing || isLocked}
-                      onClick={() => {
-                        if (product.options && product.options.length > 0 && selectedOptions.length === 0) {
-                          setPurchaseError("Please select a package/option before instant buy.");
-                          return;
-                        }
-                        setPurchaseError("");
-                        
-                        const priceText = currentPrice !== undefined && currentPrice !== null ? `\nPrice: ${settings?.currencySymbol || "৳"}${(currentPrice * quantity).toFixed(2)}\nQuantity: ${quantity}` : '';
-                        const msg = `Hello! I would like to instantly buy:\n*${currentTitle}*${priceText}${userInput ? `\n\n${product.requiredUserInputLabel}: ${userInput}` : ''}`;
-                        
-                        const link = product.whatsappNumber!;
-                        
-                        if (link.startsWith('http') || link.startsWith('https://')) {
-                          if (link.includes('t.me')) {
-                            window.open(`${link}?text=${encodeURIComponent(msg)}`, '_blank');
-                          } else if (link.includes('wa.me')) {
-                            window.open(`${link}?text=${encodeURIComponent(msg)}`, '_blank');
-                          } else {
-                            window.open(link, '_blank');
-                          }
-                        } else {
-                          let num = link.replace(/[^\d+]/g, '');
-                          if (num.startsWith('01')) {
-                            num = '88' + num;
-                          }
-                          window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
-                        }
-                      }}
-                      className={`flex-1 text-sm py-4 font-bold uppercase tracking-widest ${
-                        product.whatsappNumber!.includes('t.me') 
-                          ? 'border-[#0088cc]/30 text-[#0088cc] hover:bg-[#0088cc]/10' 
-                          : (!product.whatsappNumber!.startsWith('http') || product.whatsappNumber!.includes('wa.me')) 
-                            ? 'border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10' 
-                            : 'border-zinc-500/30 text-zinc-300 hover:bg-zinc-800'
-                      }`}
-                    >
-                      {product.whatsappNumber!.includes('t.me') ? "Telegram Buy" : (product.whatsappNumber!.startsWith('http') && !product.whatsappNumber!.includes('wa.me')) ? "Order Link" : "WhatsApp Buy"}
-                    </Button>
-                  )}
+                        <div className="mt-3">
+                          <Button 
+                            variant="outline" 
+                            disabled={isActuallySoldOut || isPurchasing || isLocked}
+                            onClick={() => {
+                              const msg = `Hello! I would like to buy:\n*${currentTitle}*${userInput ? `\n\n${product.requiredUserInputLabel}: ${userInput}` : ''}`;
+                              const link = product.whatsappNumber!;
+                              if (link.startsWith('http')) {
+                                window.open(link, '_blank');
+                              } else {
+                                window.open(`https://wa.me/${link}?text=${encodeURIComponent(msg)}`, '_blank');
+                              }
+                            }}
+                            className="w-full h-11 bg-transparent border-zinc-800 text-zinc-500 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest rounded-xl"
+                          >
+                            {product.whatsappNumber!.includes('t.me') ? "Telegram Buy" : "WhatsApp Buy"}
+                          </Button>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
