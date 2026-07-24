@@ -29,6 +29,7 @@ export function AdminSettings() {
   const [newChatId, setNewChatId] = useState("");
   const [noticeBanner, setNoticeBanner] = useState(settings?.noticeBanner || "");
   const [maintenanceMode, setMaintenanceMode] = useState(settings?.maintenanceMode || false);
+  const [isNameCheckEnabled, setIsNameCheckEnabled] = useState(settings?.isNameCheckEnabled ?? false);
   const [premiumThreshold, setPremiumThreshold] = useState(settings?.premiumThreshold?.toString() || "5000");
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(settings?.paymentMethods || []);
   const [freeFireApiUrl, setFreeFireApiUrl] = useState(settings?.freeFireApiUrl || "");
@@ -71,6 +72,7 @@ export function AdminSettings() {
       dailyPopupLinkLabel,
       noticeBanner,
       maintenanceMode,
+      isNameCheckEnabled,
       premiumThreshold: premiumThreshold ? parseInt(premiumThreshold, 10) : 5000,
       paymentMethods,
       freeFireApiUrl,
@@ -347,6 +349,19 @@ export function AdminSettings() {
             <div>
               <span className="block text-sm font-bold text-white">Maintenance Mode</span>
               <span className="block text-xs text-zinc-500">Show a popup to tell users you are working on the app right now.</span>
+            </div>
+          </label>
+
+          <label className="flex items-center space-x-3 bg-[#111] p-4 rounded-xl border border-zinc-800 cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={isNameCheckEnabled} 
+              onChange={e => setIsNameCheckEnabled(e.target.checked)}
+              className="w-5 h-5 bg-[#111] border-zinc-800 rounded focus:ring-zinc-600"
+            />
+            <div>
+              <span className="block text-sm font-bold text-white">Free Fire Name Check (UID Check)</span>
+              <span className="block text-xs text-zinc-500">Enable or disable the "Check Name" button on product pages.</span>
             </div>
           </label>
           

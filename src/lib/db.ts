@@ -118,6 +118,7 @@ export interface AppSettings {
   noticeBanner?: string;
   maintenanceMode?: boolean;
   premiumThreshold?: number;
+  isNameCheckEnabled?: boolean;
   // Auto Topup APIs
   freeFireApiUrl?: string;
   freeFireApiKey?: string;
@@ -143,7 +144,8 @@ class FirebaseDatabase {
       appName: "bdtopupbazaar",
       heroTitle: "Discover Premium Products",
       heroSubtitle: "Browse the latest offerings and curate your own digital showcase.",
-      currencySymbol: "৳"
+      currencySymbol: "৳",
+      isNameCheckEnabled: false
     };
     try {
       await setDoc(ref, defaultSettings);

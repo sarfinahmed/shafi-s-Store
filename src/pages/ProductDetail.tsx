@@ -26,7 +26,10 @@ export function ProductDetail() {
   const [checkingName, setCheckingName] = useState(false);
   const [checkedName, setCheckedName] = useState<string | null>(null);
 
+  const isNameCheckEnabled = settings?.isNameCheckEnabled ?? false;
+
   const checkFreeFireName = async () => {
+    if (!isNameCheckEnabled) return;
     const uid = userInput.trim();
     if (!uid) return;
     if (uid.length < 3) {
@@ -415,7 +418,7 @@ export function ProductDetail() {
                         className="w-full bg-[#111] border border-zinc-800 text-white text-sm rounded-lg px-4 py-3 focus:outline-none focus:border-zinc-500 transition-colors placeholder:text-zinc-700"
                         placeholder={`Enter ${product.requiredUserInputLabel}`}
                       />
-                      {(product.title.toLowerCase().includes("free fire") || product.title.toLowerCase().includes("ff") || (product.requiredUserInputLabel && product.requiredUserInputLabel.toLowerCase().includes("uid"))) && (
+                      {(isNameCheckEnabled && (product.title.toLowerCase().includes("free fire") || product.title.toLowerCase().includes("ff") || (product.requiredUserInputLabel && product.requiredUserInputLabel.toLowerCase().includes("uid")))) && (
                         <button
                           onClick={checkFreeFireName}
                           disabled={checkingName || !userInput.trim()}
@@ -425,7 +428,7 @@ export function ProductDetail() {
                         </button>
                       )}
                     </div>
-                    {checkedName && (
+                    {isNameCheckEnabled && checkedName && (
                       <div className={`text-xs font-bold mt-2 ${checkedName.includes("❌") ? 'text-red-500' : 'text-green-400'}`}>
                         {checkedName}
                       </div>
